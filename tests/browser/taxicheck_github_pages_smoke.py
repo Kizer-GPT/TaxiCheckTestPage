@@ -86,6 +86,43 @@ def assert_shift(page, shift_id, start, start_time, end, end_time):
     no_overflow(page, f"{shift_id} dashboard")
 
 
+def test_cash_tile_compact(page):
+    """Public demo: gross (yellow) = pre-fee; cash (green) = gross minus fees."""
+    for shift in ("s22", "s20", "s21"):
+        page.locator(f'#shiftRibbon [data-shift-id="{shift}"]').click()
+        gross = rubles(page.locator("#tileGross").inner_text())
+        after = rubles(page.locator("#tileCash").inner_text())
+        fees = rubles(page.locator("#tileCommissions").inner_text())
+        require(abs(gross - after - fees) < 0.011,
+                f"{shift}: gross {gross} minus fees {fees} != cash after fees {after}")
+        require("Грязь" in page.locator('.tile-cash').inner_text(),
+                "Gross label missing")
+        require("После комиссий" in page.locator("#tileCashMeta").inner_text(),
+                "Net cash label missing")
+        gross_color = page.locator("#tileGross").evaluate(
+            "(el) => getComputedStyle(el).color")
+        after_color = page.locator("#tileCash").evaluate(
+            "(el) => getComputedStyle(el).color")
+        require(gross_color != after_color, "Gross and net colors must differ")
+        require(gross_color == "rgb(255, 209, 41)",
+                f"Gross color must be taxi-yellow, got {gross_color}")
+        require(after_color == "rgb(107, 225, 174)",
+                f"Post-commission cash must be green, got {after_color}")
+    # 137px old tiles had excessive dead space; shrink while remaining tappable.
+    heights = page.locator('#home .tile').evaluate_all(
+        "(els) => els.map(el => el.getBoundingClientRect().height)")
+    require(max(heights) <= 134,
+            f"Dashboard tiles not compact enough: {heights}")
+    require(min(heights) >= 44, "Touch target too small")
+    clipping = page.locator('.tile-cash').evaluate("""el => {
+      const bottom=el.getBoundingClientRect().bottom;
+      return Array.from(el.querySelectorAll('strong,small,span')).some(child =>
+        child.getBoundingClientRect().bottom > bottom + 1);
+    }""")
+    require(not clipping, "Cash amounts clipped by compact tile")
+    no_overflow(page, "compact dashboard tiles")
+
+
 def test_demo_forms(page):
     """Change an invented record, verify its net effect, then remove it."""
     page.locator('#shiftRibbon [data-shift-id="s22"]').click()
@@ -274,6 +311,7 @@ def run_case(browser, width, height):
             page.locator("#backHome").click()
             record["screens"].append(screen)
 
+        test_cash_tile_compact(page)
         test_demo_forms(page)
         test_qa_persistence(page)
         record["screens"].append("qa_checklist")
