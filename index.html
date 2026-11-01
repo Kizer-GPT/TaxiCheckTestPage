@@ -410,7 +410,7 @@ function qaDevicePanel(){
  return '<section class="qa-device"><h3>Информация об устройстве</h3><dl class="qa-device-grid">'+
   rows.map(([label,value])=>'<dt>'+escapeHtml(label)+'</dt><dd>'+escapeHtml(value)+'</dd>').join('')+
   '</dl><label class="qa-model-label" for="qaModelInput">Точная модель телефона (необязательно)<input class="qa-model-input" id="qaModelInput" type="text" maxlength="80" autocomplete="off" placeholder="Например, iPhone 16 Pro или Galaxy S24" value="'+escapeHtml(qaReadModel())+'"></label>'+
-  '<p class="qa-device-note">Точную модель и версию ОС браузер может скрывать. Все сведения попадут только в скопированный отчёт. Автоматической отправки нет.</p></section>';
+  '<p class="qa-device-note">Точную модель и версию ОС браузер может скрывать. Все сведения попадут в отчёт только после нажатия «Скопировать отчёт». Автоматической отправки нет.</p></section>';
 }
 function qaDeviceReport(){
  const d=qaDeviceInfo(),input=$('#qaModelInput');
