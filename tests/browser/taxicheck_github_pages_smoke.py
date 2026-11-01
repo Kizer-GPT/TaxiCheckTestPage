@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+"""Read-only public-site Playwright smoke test for the TaxiCheck synthetic demo.
+
+Only the browser's in-memory demonstration forms are changed. This does not
+contact Apark, Sheets or the private TaxiCheck application.
+"""
+import json
+import os
+import re
+import time
+import traceback
+from pathlib import Path
+from urllib.parse import urlparse
+
+from playwright.sync_api import sync_playwright
+
+SITE = os.environ.get(
+    "TAXICHECK_PAGES_URL",
+    "https://kizer-gpt.github.io/TaxiCheckTestPage/",
+)
+EXPECTED_HOST = "kizer-gpt.github.io"
+if urlparse(SITE).scheme != "https" or urlparse(SITE).hostname != EXPECTED_HOST:
+    raise SystemExit("Refusing to run against a URL outside the public demo host")
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = ROOT / "playwright-artifacts"
+OUT.mkdir(parents=True, exist_ok=True)
+VIEWPORTS = ((402, 874), (375, 812))
+EXPECTED_SHIFTS = {
+    "s20": ("2026-10-20", "10:00", "2026-10-20", "22:00"),
+    "s21": ("2026-10-21", "23:00", "2026-10-22", "13:00"),
+    "s22": ("2026-10-22", "14:00", "2026-10-23", "02:00"),
+}
+CASES = []
+
+
+def require(ok, message):
+    if not ok:
+        raise AssertionError(message)
+
+
+def rubles(label):
+    value = re.sub(r"[^\d,.\-−]", "", label).replace("−", "-").replace(",", ".")
+    return float(value)
+
+
+def no_overflow(page, context):
+    metrics = page.evaluate("""() => ({
+      width: window.innerWidth,
+      doc: document.documentElement.scrollWidth,
+      body: document.body.scrollWidth
+    })""")
+    require(
+        metrics["doc"] <= metrics["width"] + 1,
+        f"Horizontal overflow in {context}: {metrics}",
+    )
+
+
+def assert_shift(page, shift_id, start, start_time, end, end_time):
+    chip = page.locator(f'#shiftRibbon [data-shift-id="{shift_id}"]')
+    chip.click()
+    require(chip.get_attribute("aria-pressed") == "true", "Shift was not selected")
+    period = page.locator("#periodLine").inner_text()
+    fmt = lambda d: d[8:10] + "." + d[5:7]
+    require(
+        f"{fmt(start)} {start_time}" in period
+        and f"{fmt(end)} {end_time}" in period,
+        f"Wrong dates in selected shift: {period}",
+    )
+    require(
+        ("cross-day" in (chip.get_attribute("class") or "")) == (start != end),
+        f"Cross-midnight marker incorrect for {shift_id}",
+    )
+    page.locator("#shiftEditToggle").click()
+    expected = {
+        "#shiftFromDate": start,
+        "#shiftFromTime": start_time,
+        "#shiftToDate": end,
+        "#shiftToTime": end_time,
+    }
+    for selector, value in expected.items():
+        actual = page.locator(selector).input_value()
+        require(actual == value, f"{shift_id} {selector}: {actual} != {value}")
+    no_overflow(page, f"{shift_id} shift editor")
+    page.locator("#shiftEditCancel").click()
+    no_overflow(page, f"{shift_id} dashboard")
+
+
+def test_demo_forms(page):
+    """Change an invented record, verify its net effect, then remove it."""
+    page.locator('#shiftRibbon [data-shift-id="s22"]').click()
+    before = rubles(page.locator("#netNum").inner_text())
+    page.locator('#home .tile[data-screen="other"]').click()
+    page.locator('[data-add="other"]').click()
+    page.locator("#amountInput").fill("27.50")
+    page.locator("#commentInput").fill("QA-night-demo-unique")
+    page.locator("#entryDateInput").fill("2026-10-23")
+    page.locator("#entryTimeInput").fill("01:35")
+    page.locator("#saveEntry").click()
+    match = page.locator(".record").filter(has_text="QA-night-demo-unique")
+    require(match.count() == 1, "Night expense not added")
+    match.locator("[data-expand]").click()
+    require(
+        "Дата: 23.10.2026" in match.inner_text(),
+        "Post-midnight record got the wrong calendar date",
+    )
+    page.locator("#backHome").click()
+    after = rubles(page.locator("#netNum").inner_text())
+    require(abs((before - after) - 27.50) < 0.01,
+            f"Expense did not decrease net by 27.50: {before} -> {after}")
+    page.locator('#home .tile[data-screen="other"]').click()
+    match = page.locator(".record").filter(has_text="QA-night-demo-unique")
+    match.locator("[data-expand]").click()
+    page.once("dialog", lambda dialog: dialog.accept())
+    match.locator("[data-delete]").click()
+    require(
+        page.locator(".record").filter(has_text="QA-night-demo-unique").count() == 0,
+        "Deleted demo expense still visible",
+    )
+    page.locator("#backHome").click()
+    restored = rubles(page.locator("#netNum").inner_text())
+    require(abs(restored - before) < 0.01,
+            f"Net not restored after deleting demo expense: {restored}")
+
+
+def run_case(browser, width, height):
+    record = {
+        "viewport": f"{width}x{height}",
+        "url": SITE,
+        "status": "pending",
+        "errors": [],
+        "unexpected_origins": [],
+        "screens": [],
+    }
+    context = browser.new_context(
+        viewport={"width": width, "height": height},
+        device_scale_factor=3,
+        is_mobile=True,
+        has_touch=True,
+        locale="ru-RU",
+        timezone_id="Europe/Moscow",
+    )
+    page = context.new_page()
+    page.on("pageerror", lambda err: record["errors"].append(str(err)))
+    page.on(
+        "request",
+        lambda request: record["unexpected_origins"].append(request.url)
+        if urlparse(request.url).hostname not in (EXPECTED_HOST, None) else None,
+    )
+    start = time.monotonic()
+    try:
+        response = page.goto(SITE, wait_until="domcontentloaded", timeout=45000)
+        require(response is not None and response.ok,
+                f"Page did not load: {response.status if response else 'no response'}")
+        page.locator('#home .tile[data-screen]').first.wait_for(timeout=12000)
+        require(page.locator('#home .tile[data-screen]').count() == 8,
+                "Expected exactly eight dashboard tiles")
+        require("вымышлены" in page.locator("#globalNotice").inner_text().lower(),
+                "Missing synthetic-data notice")
+        no_overflow(page, "home")
+        require(
+            page.locator('#shiftRibbon [data-shift-id="s22"]').get_attribute("aria-pressed") == "true",
+            "22 October night shift must be selected by default",
+        )
+        page.screenshot(path=str(OUT / f"pages_{width}_home.jpg"),
+                        type="jpeg", quality=72, full_page=True,
+                        animations="disabled")
+        record["screens"].append("home")
+
+        for shift_id in ("s20", "s21", "s22"):
+            assert_shift(page, shift_id, *EXPECTED_SHIFTS[shift_id])
+        require(
+            page.locator('#shiftRibbon [data-shift-id="s21"] .shift-chip-date-end').inner_text().strip() == "→ 22.10",
+            "Previous overnight shift must end on 22 October",
+        )
+        require(
+            page.locator('#shiftRibbon [data-shift-id="s22"] .shift-chip-date-end').inner_text().strip() == "→ 23.10",
+            "Selected overnight shift must end on 23 October",
+        )
+
+        for screen in ("cash", "commissions", "rent", "fuel",
+                       "other", "bonuses", "mileage", "consumption"):
+            page.locator(f'#home .tile[data-screen="{screen}"]').click()
+            require(page.locator("#detail").is_visible(),
+                    f"Details not opened: {screen}")
+            no_overflow(page, f"details {screen}")
+            page.locator("#backHome").click()
+            record["screens"].append(screen)
+
+        test_demo_forms(page)
+        require(not record["errors"], f"JavaScript exceptions: {record['errors']}")
+        require(not record["unexpected_origins"],
+                f"Unexpected external requests: {record['unexpected_origins']}")
+        record["status"] = "passed"
+    except Exception as exc:
+        record["status"] = "failed"
+        record["failure"] = f"{type(exc).__name__}: {exc}"
+        record["traceback"] = traceback.format_exc(limit=6)
+        try:
+            page.screenshot(path=str(OUT / f"pages_{width}_failure.jpg"),
+                            type="jpeg", quality=72, full_page=True)
+        except Exception:
+            pass
+    finally:
+        record["seconds"] = round(time.monotonic() - start, 2)
+        context.close()
+    return record
+
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    for width, height in VIEWPORTS:
+        row = run_case(browser, width, height)
+        CASES.append(row)
+        print(f"{row['viewport']}: {row['status']}; {row.get('failure', '')}",
+              flush=True)
+    browser.close()
+
+report = {
+    "source": "public GitHub Pages (not local and not Netlify)",
+    "url": SITE,
+    "passed": sum(x["status"] == "passed" for x in CASES),
+    "total": len(CASES),
+    "cases": CASES,
+}
+(OUT / "github_pages_report.json").write_text(
+    json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8",
+)
+print(f"GitHub Pages Playwright: {report['passed']}/{report['total']} passed",
+      flush=True)
+if report["passed"] != report["total"]:
+    raise SystemExit(1)
