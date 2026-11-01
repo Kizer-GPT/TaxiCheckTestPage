@@ -248,6 +248,30 @@ body{
 @media(prefers-reduced-motion:reduce){
  .tile:active,.shift-chip:active{transform:none}
 }
+
+/* Public, per-browser manual QA checklist. No accounts, uploads or server state. */
+.qa-panel{margin-top:16px;border:1px solid var(--border);border-radius:17px;background:var(--panel);padding:12px;min-width:0}
+.qa-panel details{min-width:0}
+.qa-panel summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:750;font-size:16px;padding:5px 2px;min-height:36px}
+.qa-panel summary::-webkit-details-marker{display:none}
+.qa-panel summary::before{content:'▸';color:#80b9fa;font-size:17px;flex:none}
+.qa-panel details[open] summary::before{content:'▾'}
+.qa-heading{flex:1;min-width:0}
+.qa-count{font-size:13px;font-variant-numeric:tabular-nums;color:#99c9fb;font-weight:700;white-space:nowrap}
+.qa-intro,.qa-storage-note{font-size:12px;line-height:1.55;color:var(--muted);margin:10px 0}
+.qa-progress{display:block;width:100%;height:12px;accent-color:#5aac8c;margin:8px 0 13px}
+.qa-group{border-top:1px solid var(--border);padding-top:12px;margin-top:12px}
+.qa-group h3{font-size:13px;color:#bfdbf3;margin:0 0 9px;font-weight:750}
+.qa-task{display:flex;align-items:flex-start;gap:11px;padding:10px 8px;margin:5px 0;border:1px solid #34465a;border-radius:12px;cursor:pointer;line-height:1.45;font-size:13px;overflow-wrap:anywhere;min-height:44px}
+.qa-task:has(input:checked){border-color:#376b59;background:rgba(47,141,100,.09)}
+.qa-task input{width:19px;height:19px;min-width:19px;margin:1px 0 0;accent-color:#52b68b}
+.qa-task input:focus-visible{outline:2px solid #a0cef9;outline-offset:3px}
+.qa-task input:checked+span{color:var(--muted)}
+.qa-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 6px}
+.qa-actions button{min-width:0;min-height:46px;border-radius:12px;border:1px solid #4d6886;background:#1e344b;color:var(--txt);font-size:13px;padding:8px}
+.qa-actions #qaReset{border-color:#80636b;color:#ffd5d9}
+.qa-storage-warning{padding:10px;border:1px solid #a17a41;border-radius:9px;color:#ffdea3;font-size:12px;line-height:1.4}
+@media(max-width:360px){.qa-panel{padding:9px}.qa-task{padding:10px 6px}.qa-actions button{font-size:12px}}
 </style>
 </head>
 <body>
@@ -339,6 +363,65 @@ body{
 const $=s=>document.querySelector(s), money=n=>typeof n==='number'&&Number.isFinite(n)?n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽':'Нет данных';
 const signed=n=>n<0?'−'+money(Math.abs(n)):'+'+money(n);
 // Synthetic finances, not real Apark/driver transactions.
+// Manual QA progress is local to this browser profile and is never transmitted.
+const QA_STORAGE_KEY='taxicheck-public-qa-v1';
+const qaGroups=[
+ {title:'Экран и навигация',items:[
+  ['layout','Открой в Safari или другом мобильном браузере: ничего не обрезано, нет горизонтальной прокрутки.'],
+  ['home','На главном экране видны чистый заработок, рабочее время и все восемь плиток.'],
+  ['tiles','Открой каждую плитку, пролистай детализацию, вернись назад. Все кнопки доступны.'],
+  ['commissions','Открой «Комиссии»: проверь раскрытие операций, фильтры и длинные суммы.']
+ ]},
+ {title:'Смены и даты',items:[
+  ['shift22','Проверь смену 22.10 14:00 → 23.10 02:00: обе даты и время видны.'],
+  ['shift21','Выбери смену 21.10 23:00 → 22.10 13:00: до следующей смены час.'],
+  ['shift20','Выбери смену 20.10 10:00–22:00: она не пересекает полночь.'],
+  ['shiftedit','Открой редактор смены, измени начало на час и проверь пересчёт границы соседней смены. Затем сбрось демо-данные.'],
+  ['overnight','В деталях кассы 22.10 найди демонстрационную операцию после полуночи (23.10 01:18).'],
+  ['custom','Переключись на «Свой период», выбери 22–23.10, нажми «Показать» и вернись к сменам.']
+ ]},
+ {title:'Ручные записи и расчёты',items:[
+  ['cash','Добавь наличный заказ 100 ₽ на 23.10 в 01:30. Убедись, что он появился в кассе.'],
+  ['cash-edit','Измени созданный заказ на 150 ₽, затем удали. Проверь изменение чистого заработка.'],
+  ['fuel','Добавь тестовую заправку 1000 ₽ / 20 л / 50 ₽, проверь её и удали.'],
+  ['other','Добавь прочий расход 50 ₽: заработок должен снизиться на 50 ₽. Удали расход.'],
+  ['warnings','Проверь предупреждения для пустых данных: отсутствие записей не должно означать подтверждённый ноль.']
+ ]},
+ {title:'Особенности телефона',items:[
+  ['controls','Проверь системные поля дат, времени и сумм; клавиатура не перекрывает «Сохранить».'],
+  ['files','В редакторе смены прикрепи безличную тестовую картинку, проверь предпросмотр и удаление. Не используй настоящие документы.'],
+  ['rotation','Поверни телефон горизонтально и обратно: текст и кнопки остаются доступны.'],
+  ['refresh','Нажми «Обновить» или восстанови демо. Галочки QA должны остаться на месте.'],
+  ['reload','Обнови вкладку Safari: галочки QA должны сохраниться. Только «Сбросить чек-лист» удаляет отметки.']
+ ]}
+];
+const qaItems=qaGroups.flatMap(g=>g.items);
+const qaIdSet=new Set(qaItems.map(x=>x[0]));
+function readQaProgress(){
+ try{const raw=localStorage.getItem(QA_STORAGE_KEY);const items=raw?JSON.parse(raw):[];return {checked:new Set(Array.isArray(items)?items.filter(x=>qaIdSet.has(x)):[]),available:true}}
+ catch(_){return {checked:new Set(),available:false}}
+}
+const qaProgress=readQaProgress();
+function saveQaProgress(){
+ try{localStorage.setItem(QA_STORAGE_KEY,JSON.stringify([...qaProgress.checked]));qaProgress.available=true}
+ catch(_){qaProgress.available=false}
+}
+function refreshQaCounters(){
+ const count=qaProgress.checked.size,total=qaItems.length;
+ const label=$('#qaCount'),bar=$('#qaProgressBar'),warning=$('#qaStorageWarning');
+ if(label)label.textContent=count+' / '+total;
+ if(bar)bar.value=count;
+ if(warning)warning.hidden=qaProgress.available;
+}
+function renderQaChecklist(){
+ const total=qaItems.length,count=qaProgress.checked.size;
+ const groups=qaGroups.map(group=>'<section class="qa-group"><h3>'+escapeHtml(group.title)+'</h3>'+group.items.map(item=>'<label class="qa-task"><input type="checkbox" data-qa-id="'+item[0]+'" '+(qaProgress.checked.has(item[0])?'checked':'')+'><span>'+escapeHtml(item[1])+'</span></label>').join('')+'</section>').join('');
+ return '<section class="qa-panel" id="qaChecklistPanel"><details id="qaDetails"><summary><span class="qa-heading">☑ QA-чек-лист для телефона</span><span class="qa-count" id="qaCount">'+count+' / '+total+'</span></summary><p class="qa-intro">Пройди тесты на этом устройстве и отмечай выполненное. Результат сохраняется только в твоём браузере и не отправляется на сервер. На другом телефоне будет свой список.</p><progress class="qa-progress" id="qaProgressBar" max="'+total+'" value="'+count+'" aria-label="Прогресс QA-чек-листа"></progress>'+groups+'<div class="qa-actions"><button type="button" id="qaCopy">Скопировать отчёт</button><button type="button" id="qaReset">Сбросить чек-лист</button></div><p class="qa-storage-note">Сброс демо-данных и кнопка «Обновить» галочки не стирают. Очистка данных Safari или приватный режим могут их удалить.</p><p class="qa-storage-warning" id="qaStorageWarning" '+(qaProgress.available?'hidden':'')+'>Браузер запретил локальное сохранение: галочки могут исчезнуть после закрытия страницы.</p></details></section>';
+}
+function qaReportText(){
+ return 'TaxiCheck · мобильный QA ('+qaProgress.checked.size+'/'+qaItems.length+')\\n'+
+  qaGroups.map(g=>'\\n'+g.title+'\\n'+g.items.map(x=>(qaProgress.checked.has(x[0])?'[x] ':'[ ] ')+x[1]).join('\\n')).join('\\n');
+}
 const demoShiftFinancials={
  s18:{cash:16190.40,fees:2524.60,rent:3100.00,bonus:0,commission:[1670.20,350.80,380.40,123.20]},
  s19:{cash:16158.40,fees:2650.20,rent:2400.00,bonus:700.00,commission:[1745.20,390.00,380.00,135.00]},
@@ -594,7 +677,7 @@ if(isFuel)html+='<div class="info-notice">Попробуй добавить те
 return html}
 function renderEarnings(){const {view:v}=computed(),net=v.net;header(net===null?'—':money(net),v.provisional?'Условный результат по доступным данным. НЕ подтверждённый убыток или прибыль.':'Сумма по доступным данным. Демонстрационные расходы отмечены отдельно.');if(Number.isFinite(net))$('#heroTotal').classList.add(net<0?'red':'green');let html=row('Касса', '+'+money(v.cash),'green')+row('Комиссии','−'+money(v.fees),'red')+row(v.expectedDays?'Аренда из MAIN · факт + план':'Аренда из MAIN','−'+money(v.rentMain),'red')+row('Заправки · введённые','−'+money(v.fuel),'red')+row('Прочие расходы · введённые','−'+money(v.other),'red')+row('Бонусное покрытие аренды',money(v.bonus),'blue');if(v.provisional){html+='<div class="warn-notice"><div class="review-title">! Требует проверки · '+v.notes.length+' пунктов</div><ul class="review-list">'+v.notes.slice(0,9).map(n=>'<li>'+escapeHtml(n)+'</li>').join('')+'</ul>'+(v.notes.length>9?'<p>Ещё '+(v.notes.length-9)+' предупреждений. Для полного отчёта нужна синхронизация.</p>':'')+'</div>';const days=selectedCalendarDates();if(!selectedShift()&&days.length===1&&!Number.isFinite(dates[days[0]]?.cash)){const checked=!!state.cashZeroConfirmed[days[0]];html+='<button class="review-action" data-confirm-no-cash="'+days[0]+'">'+(checked?'Снять подтверждение нулевой кассы':'Подтвердить: заказов не было (0 ₽)')+'</button>'}}else html+='<div class="info-notice">Бонусы уменьшают денежную часть аренды, не добавляясь к доходу повторно.</div>';return html}
 function renderWork(){const sh=selectedShift(),mins=selectedMinutes();header(mins===null?'—':Math.floor(mins/60)+' ч '+mins%60+' мин','Рабочее время связано со сменой, час буфера не включаем.');if(!sh)return '<div class="info-notice">Для редактирования рабочего времени выберите смену.</div>';return `<div class="form-box"><p class="form-title">Рабочее время · ${dateShort(sh.to)}</p><div class="form-grid"><label class="input-label">Часы<input type="number" id="hours" min="0" max="24" inputmode="numeric" placeholder="${Math.floor(mins/60)}"></label><label class="input-label">Минуты<input type="number" id="minutes" min="0" max="59" inputmode="numeric" placeholder="${mins%60}"></label></div><div class="form-buttons"><button class="primary-small" id="saveWork">Применить</button></div></div><div class="info-notice">Изменения только в этом макете.</div>`}
-function renderSettings(){header('Демо-настройки','В этом макете нельзя изменять аккаунт, синхронизацию или боевые данные.');return '<div class="simple-settings"><button id="resetDemo">Восстановить демонстрационные цифры</button><button id="openPeriod">Изменить период</button></div><div class="info-notice">HTML работает локально: Google Apps Script и Апарк не вызываются.</div>'}
+function renderSettings(){header('Демо-настройки','В этом макете нельзя изменять аккаунт, синхронизацию или боевые данные.');return '<div class="simple-settings"><button id="resetDemo">Восстановить демонстрационные цифры</button><button id="openPeriod">Изменить период</button></div>'+renderQaChecklist()+'<div class="info-notice">HTML работает локально: Google Apps Script и Апарк не вызываются.</div>'}
 function renderSync(){header('Не подключена','Фоновая синхронизация здесь только представлена визуально.');return '<div class="warn-notice">В прототипе нет API-запросов, фоновых таймеров и авторизации. Реальную синхронизацию нужно отдельно проверять в TaxiCheck.</div>'+row('Апарк · MAIN','Демо-данные')+row('Апарк · BY_BONUS','Демо-данные')+row('Gmail','Не подключена')}
 function renderOther(){if(state.screen==='mileage'){const sh=selectedShift(),m=sh&&Number.isFinite(sh.mileage)?sh.mileage:null;header(m===null?'—':m.toLocaleString('ru-RU')+' км',sh?'Демонстрационный пробег выбранной смены.':'Произвольный интервал не имеет вычисляемого пробега.');return sh?row('Пробег смены',m===null?'—':m+' км')+'<div class="info-notice">Для редактирования пробега и прикрепления фото одометра открой «Параметры смены» на главной.</div>':'<div class="info-notice">Для отображения пробега выберите смену в ленте под панелью периода.</div>'}const v=Number.isFinite(state.consumptionLper100)?state.consumptionLper100:null;header(v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км','Накопительный расход по всем сменам, не зависит от периода (демо).');return row('Накопительный расход',v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км')+'<div class="info-notice">Демонстрационное значение. Для точного расчёта нужны подтверждённый пробег и фактически израсходованное топливо.</div>'}
 function renderDetail(){const name=state.screen;const content=name==='cash'?renderCash():name==='commissions'?renderCommissions():name==='rent'?renderRent():name==='bonuses'?renderBonuses():name==='fuel'||name==='other'?renderFuelOrOther(name):name==='earnings'?renderEarnings():name==='work'?renderWork():name==='settings'?renderSettings():name==='sync'?renderSync():renderOther();$('#detailContent').innerHTML=content}
@@ -603,7 +686,7 @@ function openScreen(s){state.screen=s;state.filter=-1;state.openForm=false;state
 function markPeriodDirty(){$('#globalNotice').textContent='Период изменён. Нажмите «Показать». ';}
 function applyPeriod(){const from=$('#from').value,to=$('#to').value,tf=$('#timeFrom').value||'00:00',tt=$('#timeTo').value||'23:59';if(!from||!to||from+'T'+tf>=to+'T'+tt){toast('Проверь даты и время периода');return}if(state.periodMode==='custom'&&requestedCalendarDays()>MAX_PERIOD_DAYS){$('#globalNotice').textContent='Период превышает 62 календарных дня. Расчёт не выполнен. Выбери меньший диапазон.';renderHome();toast('Максимум 62 календарных дня');return}state.date=from;if(state.periodMode==='custom')saveCustomPeriodDraft();state.periodDirty=false;state.filter=-1;state.expanded.clear();const sh=selectedShift();$('#globalNotice').textContent=sh?sh.id==='s22'?'ДЕМО 22.10: все финансовые суммы, начисления и траты вымышлены.':'СМЕНА '+dateShort(sh.from)+' · ДЕМО: касса, комиссии, аренда, бонусы, бензин и траты вымышлены.':dayData()?'СВОЙ ПЕРИОД: пробег скрыт. Данные только за полный календарный день.':'СВОЙ ПЕРИОД: пробег скрыт. Почасовая финансовая история не загружена.';syncRibbon();updateDateLabels();openScreen('home')}
 function saveEntry(){const a=Number($('#amountInput')?.value);if(!Number.isFinite(a)||a<=0||a>1e7){toast('Укажи положительную сумму');return}const sh=selectedShift(),entryDate=$('#entryDateInput')?.value,entryTime=$('#entryTimeInput')?.value||'',first=sh?.from||$('#from').value,last=sh?.to||$('#to').value;if(!entryDate||entryDate<first||entryDate>last){toast('Дата операции должна входить в выбранный период');return}const type=state.screen,comment=($('#commentInput')?.value||'').trim();const litres=type==='fuel'?Number($('#litresInput')?.value):null,price=type==='fuel'?Number($('#priceInput')?.value):null;const fuelFields=type==='fuel'&&Number.isFinite(litres)&&litres>0&&Number.isFinite(price)&&price>0?{litres,price}:{};if(state.editId){const r=state.manual.find(x=>x.id===state.editId);if(r){r.amount=+a.toFixed(2);r.comment=comment;r.title=comment||r.title;r.date=entryDate;r.time=entryTime;r.shiftId=sh?.id||null;Object.assign(r,fuelFields)}}else{const title=comment||({cash:'Наличный заказ',fuel:'Заправка',other:'Прочий расход'}[type]);state.manual.unshift({id:'m'+Date.now()+Math.random().toString(36).slice(2),shiftId:sh?.id||null,date:entryDate,time:entryTime,type,amount:+a.toFixed(2),comment,title,...fuelFields})}state.openForm=false;state.editId=null;state.expanded.clear();render();toast('Сохранено только в прототипе')}
-function onDetailClick(e){const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-expand')){const id=b.dataset.expand;state.expanded.has(id)?state.expanded.delete(id):state.expanded.add(id);renderDetail();return}if(b.hasAttribute('data-filter')){state.filter=Number(b.dataset.filter);state.expanded.clear();renderDetail();return}if(b.hasAttribute('data-add')){state.openForm=true;state.editId=null;renderDetail();return}if(b.hasAttribute('data-edit')){state.editId=b.dataset.edit;state.openForm=true;renderDetail();return}if(b.hasAttribute('data-delete')){const id=b.dataset.delete;if(confirm('Удалить пробную запись?')){state.manual=state.manual.filter(x=>x.id!==id);state.expanded.delete(id);render();toast('Пробная запись удалена')}return}if(b.hasAttribute('data-confirm-no-cash')){const date=b.dataset.confirmNoCash;state.cashZeroConfirmed[date]=!state.cashZeroConfirmed[date];render();toast(state.cashZeroConfirmed[date]?'Нулевая касса подтверждена в макете':'Подтверждение кассы снято');return}if(b.id==='cancelEntry'){state.openForm=false;state.editId=null;renderDetail();return}if(b.id==='saveEntry'){saveEntry();return}if(b.id==='saveWork'){const base=selectedMinutes()??0,h=$('#hours').value.trim()===''?Math.floor(base/60):Number($('#hours').value),m=$('#minutes').value.trim()===''?base%60:Number($('#minutes').value);if(!Number.isInteger(h)||!Number.isInteger(m)||h<0||h>24||m<0||m>59){toast('Проверь часы и минуты');return}const sh=selectedShift();if(!sh){toast('Выбери смену');return}sh.workMinutes=h*60+m;state.workMinutes=demoShifts[4].workMinutes;render();toast('Время смены обновлено в макете');return}if(b.id==='resetDemo'){restoreDemoDefaults();window.scrollTo(0,0);toast('Все демо-значения восстановлены');return}if(b.id==='openPeriod'){openScreen('home');showCustomPeriod();return}}
+function onDetailClick(e){const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-expand')){const id=b.dataset.expand;state.expanded.has(id)?state.expanded.delete(id):state.expanded.add(id);renderDetail();return}if(b.hasAttribute('data-filter')){state.filter=Number(b.dataset.filter);state.expanded.clear();renderDetail();return}if(b.hasAttribute('data-add')){state.openForm=true;state.editId=null;renderDetail();return}if(b.hasAttribute('data-edit')){state.editId=b.dataset.edit;state.openForm=true;renderDetail();return}if(b.hasAttribute('data-delete')){const id=b.dataset.delete;if(confirm('Удалить пробную запись?')){state.manual=state.manual.filter(x=>x.id!==id);state.expanded.delete(id);render();toast('Пробная запись удалена')}return}if(b.hasAttribute('data-confirm-no-cash')){const date=b.dataset.confirmNoCash;state.cashZeroConfirmed[date]=!state.cashZeroConfirmed[date];render();toast(state.cashZeroConfirmed[date]?'Нулевая касса подтверждена в макете':'Подтверждение кассы снято');return}if(b.id==='cancelEntry'){state.openForm=false;state.editId=null;renderDetail();return}if(b.id==='saveEntry'){saveEntry();return}if(b.id==='saveWork'){const base=selectedMinutes()??0,h=$('#hours').value.trim()===''?Math.floor(base/60):Number($('#hours').value),m=$('#minutes').value.trim()===''?base%60:Number($('#minutes').value);if(!Number.isInteger(h)||!Number.isInteger(m)||h<0||h>24||m<0||m>59){toast('Проверь часы и минуты');return}const sh=selectedShift();if(!sh){toast('Выбери смену');return}sh.workMinutes=h*60+m;state.workMinutes=demoShifts[4].workMinutes;render();toast('Время смены обновлено в макете');return}if(b.id==='qaReset'){if(!confirm('Сбросить все отметки QA на этом устройстве?'))return;qaProgress.checked.clear();saveQaProgress();for(const input of document.querySelectorAll('[data-qa-id]'))input.checked=false;refreshQaCounters();toast('Отметки QA сброшены');return}if(b.id==='qaCopy'){const report=qaReportText();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(report).then(()=>toast('QA-отчёт скопирован')).catch(()=>window.prompt('Скопируй отчёт:',report))}else window.prompt('Скопируй отчёт:',report);return}if(b.id==='resetDemo'){restoreDemoDefaults();window.scrollTo(0,0);toast('Все демо-значения восстановлены');return}if(b.id==='openPeriod'){openScreen('home');showCustomPeriod();return}}
 $('#modeShifts').addEventListener('click',showShiftPeriod);$('#modeCustom').addEventListener('click',showCustomPeriod);
 $('#shiftRibbon').addEventListener('click',e=>{const b=e.target.closest('[data-shift-id]');if(b)chooseShift(b.dataset.shiftId)});
 $('#shiftEditToggle').addEventListener('click',()=>{if(!selectedShift())return;const p=$('#shiftEditContent');if(p.hidden){fillShiftForm();p.hidden=false;$('#shiftEditToggle').setAttribute('aria-expanded','true')}else closeShiftEditor()});
@@ -619,6 +702,7 @@ document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click'
 $('#netCard').addEventListener('click',e=>{if(!e.target.closest('#workButton')&&!e.target.closest('#netAlert'))openScreen('earnings')});$('#netCard').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target===$('#netCard'))openScreen('earnings')});$('#workButton').addEventListener('click',e=>{e.stopPropagation();openScreen('work')});$('#netAlert').addEventListener('click',e=>{e.stopPropagation();openScreen('earnings')});
 $('#gear').addEventListener('click',()=>openScreen('settings'));$('#backHome').addEventListener('click',()=>openScreen('home'));
 $('#detailContent').addEventListener('click',onDetailClick);
+$('#detailContent').addEventListener('change',e=>{const input=e.target.closest('[data-qa-id]');if(!input||!qaIdSet.has(input.dataset.qaId))return;if(input.checked)qaProgress.checked.add(input.dataset.qaId);else qaProgress.checked.delete(input.dataset.qaId);saveQaProgress();refreshQaCounters()});
 $('#refreshBtn').addEventListener('click',demoRefresh);
 $('#syncStatus').addEventListener('click',()=>openScreen('sync'));
 renderShiftRibbon();updateDateLabels();render();
