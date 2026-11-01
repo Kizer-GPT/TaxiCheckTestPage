@@ -358,7 +358,7 @@ const demoShiftCashGroups={
  s18:[{time:'13:40',amount:5230.10},{time:'17:55',amount:5700.20},{time:'21:20',amount:5260.10}],
  s19:[{time:'14:10',amount:5115.15},{time:'18:35',amount:5260.25},{time:'22:20',amount:5783.00}],
  s20:[{time:'14:05',amount:4790.35},{time:'18:15',amount:5065.45},{time:'21:40',amount:4720.00}],
- s21:[{time:'14:25',amount:5360.15},{time:'18:05',amount:5200.25},{time:'22:05',amount:5660.00}]
+ s21:[{time:'21.10 · 23:25',amount:5360.15},{time:'22.10 · 06:05',amount:5200.25},{time:'22.10 · 11:05',amount:5660.00}]
 };
 // Future newly created shift: an explicit known zero is not the same as missing history.
 const FULL_DAILY_RENT=3100;
@@ -405,9 +405,9 @@ const extraDemoRecords=[
  ['s20','2026-10-20','fuel',1723.68,'18:20','Заправка · демо','АЗС · 25,65 л'],
  ['s20','2026-10-20','other',145,'12:40','Путевой лист · демо','Документы'],
  ['s20','2026-10-20','other',235,'19:40','Рабочий расход · демо','Мелкие расходы'],
- ['s21','2026-10-21','fuel',2476.64,'19:35','Заправка · демо','АЗС · 36,80 л'],
- ['s21','2026-10-21','other',145,'11:40','Путевой лист · демо','Документы'],
- ['s21','2026-10-21','other',145,'22:25','Путевой лист № 2 · демо','Документы']
+ ['s21','2026-10-22','fuel',2476.64,'09:35','Заправка · демо','АЗС · 36,80 л'],
+ ['s21','2026-10-21','other',145,'23:40','Путевой лист · демо','Документы'],
+ ['s21','2026-10-22','other',145,'12:25','Путевой лист № 2 · демо','Документы']
 ].map(([shiftId,date,type,amount,time,title,comment],i)=>({id:'demo-shift-extra-'+i,shiftId,date,type,amount,time,title,comment,...(type==='fuel'?{litres:{s18:34.70,s19:30.10,s20:25.65,s21:36.80}[shiftId],price:{s18:67.90,s19:66.80,s20:67.20,s21:67.30}[shiftId]}:{})}));
 exampleRecords.forEach(r=>r.shiftId='s22');
 exampleRecords.push(...extraDemoRecords);
@@ -582,7 +582,7 @@ function renderCommissions(){
  if(!d)return '<p class="empty">Для периода нет подготовленных данных.</p>';
  let html='<div class="commission-grid">'+d.commission.map((v,i)=>'<button class="commission-card '+(state.filter===i?'selected':'')+'" data-filter="'+i+'" aria-pressed="'+(state.filter===i)+'"><span>'+commissionNames[i]+'</span><strong>−'+money(v)+'</strong></button>').join('')+'</div>';
  html+=row('Комиссия партнёра','Нет подтверждённых списаний');
- const history=isDemo?d.commission.map((amount,i)=>({title:commissionNames[i]+' · демо',cat:i,time:['15:30','18:20','20:15','22:10'][i],amount:-amount})):state.date==='2026-10-22'?demoFeeRecords22:[];
+ const history=isDemo?d.commission.map((amount,i)=>({title:commissionNames[i]+' · демо',cat:i,time:(sh.id==='s21'?['21.10 · 23:30','22.10 · 06:20','22.10 · 10:15','22.10 · 12:10']:['15:30','18:20','20:15','22:10'])[i],amount:-amount})):state.date==='2026-10-22'?demoFeeRecords22:[];
  const records=history.filter(r=>state.filter<0||r.cat===state.filter);
  html+='<h3 class="compact-heading">'+(isDemo?'Удержания · демо':'Демонстрационные удержания')+'</h3><div class="filter-line"><button data-filter="-1">Все операции</button><small>'+records.length+' записей в примере</small></div>';
  html+=records.length?'<div class="records">'+records.map((r,i)=>card({id:'fee'+r.cat+'-'+r.time+'-'+i,title:r.title,time:r.time,sub:isDemo?'Вымышленные удержания':'Демо · удержание',amount:r.amount,desc:isDemo?'Вымышленное удержание для визуального теста.':'Вымышленная операция для проверки интерфейса.'},'fee')).join('')+'</div>':'<div class="empty">Нет операций для фильтра.</div>';return html
