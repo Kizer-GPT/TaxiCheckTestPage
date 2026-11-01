@@ -419,8 +419,8 @@ function renderQaChecklist(){
  return '<section class="qa-panel" id="qaChecklistPanel"><details id="qaDetails"><summary><span class="qa-heading">☑ QA-чек-лист для телефона</span><span class="qa-count" id="qaCount">'+count+' / '+total+'</span></summary><p class="qa-intro">Пройди тесты на этом устройстве и отмечай выполненное. Результат сохраняется только в твоём браузере и не отправляется на сервер. На другом телефоне будет свой список.</p><progress class="qa-progress" id="qaProgressBar" max="'+total+'" value="'+count+'" aria-label="Прогресс QA-чек-листа"></progress>'+groups+'<div class="qa-actions"><button type="button" id="qaCopy">Скопировать отчёт</button><button type="button" id="qaReset">Сбросить чек-лист</button></div><p class="qa-storage-note">Сброс демо-данных и кнопка «Обновить» галочки не стирают. Очистка данных Safari или приватный режим могут их удалить.</p><p class="qa-storage-warning" id="qaStorageWarning" '+(qaProgress.available?'hidden':'')+'>Браузер запретил локальное сохранение: галочки могут исчезнуть после закрытия страницы.</p></details></section>';
 }
 function qaReportText(){
- return 'TaxiCheck · мобильный QA ('+qaProgress.checked.size+'/'+qaItems.length+')\\n'+
-  qaGroups.map(g=>'\\n'+g.title+'\\n'+g.items.map(x=>(qaProgress.checked.has(x[0])?'[x] ':'[ ] ')+x[1]).join('\\n')).join('\\n');
+ return 'TaxiCheck · мобильный QA ('+qaProgress.checked.size+'/'+qaItems.length+')\n'+
+  qaGroups.map(g=>'\n'+g.title+'\n'+g.items.map(x=>(qaProgress.checked.has(x[0])?'[x] ':'[ ] ')+x[1]).join('\n')).join('\n');
 }
 const demoShiftFinancials={
  s18:{cash:16190.40,fees:2524.60,rent:3100.00,bonus:0,commission:[1670.20,350.80,380.40,123.20]},
