@@ -378,9 +378,9 @@ const QA_MODEL_KEY='taxicheck-public-qa-model-v1';
 function qaDeviceInfo(){
  const ua=String(navigator.userAgent||'');
  const isIpad=/iPad/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1);
- const ios=/OS\\s+([\\d_]+)\\s+like Mac OS X/i.exec(ua);
- const android=/Android\\s+([\\d.]+)/i.exec(ua);
- const mac=/Mac OS X\\s+([\\d_]+)/i.exec(ua);
+ const ios=/OS\s+([\d_]+)\s+like Mac OS X/i.exec(ua);
+ const android=/Android\s+([\d.]+)/i.exec(ua);
+ const mac=/Mac OS X\s+([\d_]+)/i.exec(ua);
  let device='Не определено',os='Не определена';
  if(/iPhone/i.test(ua)){device='iPhone';os='iOS '+(ios?ios[1].replaceAll('_','.'): '(версия скрыта)')}
  else if(isIpad){device='iPad';os='iPadOS '+(ios?ios[1].replaceAll('_','.'): '(версия скрыта)')}
@@ -390,12 +390,12 @@ function qaDeviceInfo(){
  else if(/Linux/i.test(ua)){device='Компьютер';os='Linux (версия скрыта)'}
  let browser='Не определён';
  for(const [pattern,name] of [
-  [/EdgiOS\\/([\\d.]+)/i,'Edge'],[/EdgA?\\/([\\d.]+)/i,'Edge'],
-  [/CriOS\\/([\\d.]+)/i,'Chrome'],[/FxiOS\\/([\\d.]+)/i,'Firefox'],
-  [/OPiOS\\/([\\d.]+)/i,'Opera'],[/OPR\\/([\\d.]+)/i,'Opera'],
-  [/SamsungBrowser\\/([\\d.]+)/i,'Samsung Internet'],
-  [/Chrome\\/([\\d.]+)/i,'Chrome'],[/Firefox\\/([\\d.]+)/i,'Firefox'],
-  [/Version\\/([\\d.]+).*Safari/i,'Safari']
+  [/EdgiOS\/([\d.]+)/i,'Edge'],[/EdgA?\/([\d.]+)/i,'Edge'],
+  [/CriOS\/([\d.]+)/i,'Chrome'],[/FxiOS\/([\d.]+)/i,'Firefox'],
+  [/OPiOS\/([\d.]+)/i,'Opera'],[/OPR\/([\d.]+)/i,'Opera'],
+  [/SamsungBrowser\/([\d.]+)/i,'Samsung Internet'],
+  [/Chrome\/([\d.]+)/i,'Chrome'],[/Firefox\/([\d.]+)/i,'Firefox'],
+  [/Version\/([\d.]+).*Safari/i,'Safari']
  ]){const match=pattern.exec(ua);if(match){browser=name+' '+match[1];break}}
  return {device,os,browser,viewport:window.innerWidth+' × '+window.innerHeight+' CSS px',
   screen:window.screen.width+' × '+window.screen.height+' CSS px',
@@ -417,7 +417,7 @@ function qaDeviceReport(){
  const model=input?input.value.trim().slice(0,80):qaReadModel().trim();
  return ['Устройство: '+d.device,'Модель (вручную): '+(model||'Не указана'),
   'Система: '+d.os,'Браузер: '+d.browser,
-  'Область браузера: '+d.viewport,'Экран: '+d.screen,'Дата проверки: '+d.date].join('\\n');
+  'Область браузера: '+d.viewport,'Экран: '+d.screen,'Дата проверки: '+d.date].join('\n');
 }
 const qaGroups=[
  {title:'Экран и навигация',items:[
