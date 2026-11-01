@@ -123,6 +123,50 @@ def test_demo_forms(page):
             f"Net not restored after deleting demo expense: {restored}")
 
 
+def test_qa_persistence(page):
+    """Manual QA must persist per browser and reset only via its own control."""
+    page.locator("#gear").click()
+    panel = page.locator("#qaDetails")
+    require(panel.count() == 1, "QA checklist missing from gear/settings")
+    panel.locator("summary").click()
+    boxes = panel.locator('input[data-qa-id]')
+    require(boxes.count() >= 18, "QA checklist has too few test items")
+    require(not boxes.first.is_checked(), "Fresh browser QA unexpectedly checked")
+    boxes.first.check()
+    require(page.locator("#qaCount").inner_text().startswith("1 /"),
+            "QA progress not counted")
+    no_overflow(page, "QA checklist")
+
+    page.reload(wait_until="domcontentloaded")
+    page.locator("#gear").click()
+    page.locator("#qaDetails summary").click()
+    require(page.locator('input[data-qa-id]').first.is_checked(),
+            "QA checklist did not survive browser reload")
+    require(page.locator("#qaCount").inner_text().startswith("1 /"),
+            "QA progress did not survive reload")
+
+    # Resetting the DEMONSTRATION must not reset the QA checklist.
+    page.locator("#resetDemo").click()
+    page.locator("#gear").click()
+    page.locator("#qaDetails summary").click()
+    require(page.locator('input[data-qa-id]').first.is_checked(),
+            "Demo reset unexpectedly cleared QA checklist")
+
+    page.once("dialog", lambda dialog: dialog.accept())
+    page.locator("#qaReset").click()
+    require(not page.locator('input[data-qa-id]').first.is_checked(),
+            "Explicit QA reset did not clear selected items")
+    require(page.locator("#qaCount").inner_text().startswith("0 /"),
+            "Reset did not clear QA progress")
+
+    page.reload(wait_until="domcontentloaded")
+    page.locator("#gear").click()
+    page.locator("#qaDetails summary").click()
+    require(not page.locator('input[data-qa-id]').first.is_checked(),
+            "QA reset did not persist")
+    page.locator("#backHome").click()
+
+
 def run_case(browser, width, height):
     record = {
         "viewport": f"{width}x{height}",
@@ -188,6 +232,8 @@ def run_case(browser, width, height):
             record["screens"].append(screen)
 
         test_demo_forms(page)
+        test_qa_persistence(page)
+        record["screens"].append("qa_checklist")
         require(not record["errors"], f"JavaScript exceptions: {record['errors']}")
         require(not record["unexpected_origins"],
                 f"Unexpected external requests: {record['unexpected_origins']}")
