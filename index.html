@@ -1,0 +1,627 @@
+<!doctype html>
+<!-- TaxiCheck public synthetic financial demo, refreshed 2026-11-01. No real financial data. -->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b121e">
+<title>TaxiCheck · компактный прототип</title>
+<style>
+:root{color-scheme:dark;--bg:#0b121e;--panel:#151f2d;--tile:#162333;--border:#334257;--txt:#edf4fb;--muted:#98acc3;--green:#6be1ae;--red:#ff9ba7;--blue:#70b0ff;--gold:#f2c58b;--field:#1d2d41}
+*,*:before,*:after{box-sizing:border-box}
+html{scroll-behavior:auto;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:disabled{opacity:.55;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.app{max-width:900px;margin:0 auto;padding:18px 12px calc(32px + env(safe-area-inset-bottom))}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 18px}
+h1{font-size:30px;letter-spacing:-1px;line-height:1.12;margin:0;font-weight:820}
+.demo-tag{font-size:10px;letter-spacing:.3px;color:#91b8e7;margin-top:5px;font-weight:650}
+.gear{height:45px;width:45px;flex:none;border:1px solid var(--border);border-radius:13px;background:#162333;color:#d8e8f8;font-size:24px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px}
+.period-panel{padding:8px 10px;margin:0 0 14px}
+.period-line{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.period-label{font-size:clamp(11px,3.35vw,13px);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.14px;min-width:0}
+.edit-period{width:42px;height:42px;flex:none;border:1px solid #46617c;background:#1d3047;color:#e5f0ff;border-radius:11px;font-size:21px;line-height:1}
+.period-editor{border-top:1px solid #2a3e52;margin-top:8px;padding:12px 2px 4px}
+.period-editor-title{font-size:14px;font-weight:750;margin:0 0 8px}
+.period-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#112031;border:1px solid #2d4560;padding:4px;border-radius:12px;margin-bottom:10px}
+.period-mode-tab{border:0;border-radius:9px;min-height:39px;padding:7px 10px;background:transparent;color:#91a9c3;font-size:13px;font-weight:740;white-space:nowrap}
+.period-mode-tab.active{background:#2b4c72;color:#f0f7ff;box-shadow:inset 0 0 0 1px #567da7}
+.custom-period-summary{color:#c4d8ec;font-size:12px;font-weight:700;margin:8px 0 0}
+#customModePanel .period-editor{border-top:none;margin-top:4px;padding:8px 1px 3px}
+#shiftModePanel .shift-editor-panel{margin:11px 0 1px;background:#152538;border-color:#3d5571}
+#shiftModePanel .shift-editor-toggle{min-height:44px}
+
+.period-label{flex:1;overflow:hidden;text-overflow:ellipsis}
+.shift-ribbon{display:flex;gap:7px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:8px 0 0}.shift-ribbon::-webkit-scrollbar{display:none}
+.shift-chip{flex:0 0 calc((100% - 14px)/3);min-width:0;min-height:71px;border:1px solid #38536c;border-radius:11px;background:#1b2b3d;color:#cbdcef;text-align:center;padding:7px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;scroll-snap-align:start;font-variant-numeric:tabular-nums}
+.shift-chip-dates{height:34px;display:grid;grid-template-rows:19px 15px;align-items:center;justify-items:center;width:100%;min-width:0}
+.shift-chip .shift-chip-date-start{font-size:16px;line-height:19px;font-weight:810;color:#edf5ff;white-space:nowrap;letter-spacing:-.25px}
+.shift-chip .shift-chip-date-end{font-size:11px;line-height:15px;font-weight:650;color:#9eb9d5;white-space:nowrap}
+.shift-chip:not(.cross-day) .shift-chip-date-start{grid-row:1 / 3;align-self:center;font-size:17px}
+.shift-chip:not(.cross-day) .shift-chip-date-end{display:none}
+.shift-chip .shift-chip-kind{font-size:10px;line-height:13px;color:#95aac0;white-space:nowrap}
+.shift-chip.selected{border-color:#78b6f4;background:#233f5e;box-shadow:inset 0 0 0 1px #466f97;color:#f2f8ff}
+.shift-chip.selected .shift-chip-date-end,.shift-chip.selected .shift-chip-kind{color:#b9dfff}
+.shift-ribbon-note{font-size:10px;color:#869fb8;margin:5px 0 0}
+.shift-editor-panel{padding:0;margin:0 0 13px;overflow:hidden}.shift-editor-toggle{display:flex;width:100%;min-height:44px;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border:0;background:transparent;color:var(--txt);text-align:left;font-weight:720}.shift-editor-toggle small{color:#a5bcd2;font-size:11px;font-weight:500}
+.shift-editor-content{border-top:1px solid #304254;padding:11px 12px 13px}.shift-edit-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.63fr);gap:8px;margin-top:8px}.shift-edit-actions{display:flex;gap:8px;margin-top:12px}.shift-edit-actions button{min-height:41px;padding:8px 12px;border-radius:10px;font-size:13px;font-weight:700}.shift-edit-save{background:#336eaf;border:1px solid #689dd6;color:white;flex:1}.shift-edit-cancel{background:#203247;color:#d9e7f7;border:1px solid #48627c}
+.shift-edit-caption{font-size:11px;color:#9cb4cd;margin:0 0 4px}.shift-edit-label{display:block;color:#adc2d8;font-size:11px;font-weight:650}.shift-edit-input{display:block;width:100%;height:40px;margin:4px 0 0;padding:7px 9px;background:#1d2d41;border:1px solid #48637f;border-radius:9px;color:var(--txt);font-size:16px}
+.shift-files{display:grid;gap:8px;margin-top:13px}.shift-file-card{background:#182738;border:1px solid #31465e;border-radius:10px;padding:9px}.shift-file-title{font-weight:650;font-size:12px}.shift-file-input{font-size:11px;display:block;width:100%;margin:5px 0;color:#c8d9ec;max-width:100%}.shift-file-input::file-selector-button{color:#e3efff;background:#294563;border:1px solid #567c9e;padding:6px;border-radius:7px;margin-right:7px}.shift-file-current{color:#98b4d0;font-size:11px;overflow-wrap:anywhere}.shift-file-preview{max-height:85px;max-width:100%;object-fit:contain;border-radius:7px;margin-top:6px}.shift-file-clear{margin-top:5px;padding:4px 8px;background:#26394d;border:1px solid #496781;border-radius:8px;color:#f5bdc7;font-size:11px}.shift-file-clear[hidden],.shift-file-preview[hidden]{display:none!important}.shift-waybill-list{display:grid;gap:7px;margin-top:8px}.shift-waybill-item{display:flex;align-items:center;gap:8px;min-width:0;background:#142335;border:1px solid #2b445e;border-radius:9px;padding:6px}.shift-waybill-item img{width:45px;height:54px;object-fit:cover;border-radius:6px;flex:none}.shift-waybill-name{flex:1;min-width:0;overflow-wrap:anywhere;font-size:11px;color:#c3d7ea}.shift-waybill-remove{border:1px solid #6b4856;color:#ffc5ce;background:#3b2732;border-radius:8px;font-size:11px;padding:7px;min-height:34px}.shift-file-input:disabled{opacity:.5}
+
+.period-group{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,0.55fr);column-gap:8px;align-items:end;margin-bottom:9px}
+.field-wrap{min-width:0}.field-caption{display:block;color:#b1c5dc;font-size:11px;font-weight:650;margin:0 0 4px}
+.fake-native{position:relative;display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;height:42px;min-width:0;border:1px solid #47617c;background:#1d2d41;border-radius:10px;padding:0 10px;color:var(--txt);font-size:13px;overflow:hidden}
+.fake-native .native-value{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.fake-native .native-symbol{font-size:14px;color:#8fa7c2;flex:none}
+.fake-native input{position:absolute;inset:0;width:100%;height:100%;min-width:0;max-width:100%;opacity:0;z-index:2;cursor:pointer;-webkit-appearance:none;appearance:none}
+.fake-native:focus-within{border-color:#78baff;outline:1px solid #78baff}
+.period-submit{width:100%;min-height:43px;background:#24405c;border:1px solid #466684;color:#e8f2ff;border-radius:10px;font-weight:750;font-size:14px}
+.period-help{font-size:10px;color:#92a8be;margin:8px 0 0;line-height:1.35}
+.mini-note{margin:0 0 10px;color:var(--muted);font-size:11px}
+.mini-note:empty{display:none}
+.net{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(100px,1fr);gap:12px;align-items:center;background:linear-gradient(135deg,#173c31,#142a26);border-color:#3d6751;min-height:160px;padding:20px 17px;cursor:pointer}
+.net-caption{font-size:16px;font-weight:750}.net-figure{display:flex;align-items:center;gap:5px;min-width:0}
+.net-num{font-size:clamp(24px,5.5vw,34px);font-weight:850;color:#b8f4cf;white-space:nowrap;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.net-alert{border:1px solid #d06070;background:#882c3b;color:#fff2f3;width:22px;height:22px;border-radius:50%;font-size:17px;font-weight:900;flex:none;line-height:18px;padding:0}
+.net-note{font-size:11px;color:#cfdfd4;margin:6px 0 0}.review-title{font-size:12px;font-weight:750;color:#ffb4be;margin:10px 0 5px}.review-list{margin:5px 0 10px;padding-left:19px;color:#e1c9cb;font-size:12px;line-height:1.5}.review-list li+li{margin-top:5px}.review-action{border:1px solid #a46e78;background:#472d39;color:#ffe0e5;border-radius:10px;min-height:40px;padding:8px 12px;font-weight:680;font-size:12px}.net.alerted{border-color:#855b60}
+.work-summary{border-left:1px solid #476052;padding-left:12px;min-width:0}
+.work-summary span{display:block;color:#bdd4c5;font-size:10px}.work-summary strong{display:block;font-size:14px;margin:1px 0 8px}
+.work-summary button{border:1px solid #4b705d;background:#213d31;color:#eaf3fb;border-radius:10px;min-height:37px;padding:6px 11px;font-weight:600;font-size:12px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
+.tile{text-align:left;min-height:137px;padding:16px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:7px;border-radius:18px;border:1px solid var(--border);background:var(--tile);color:#eaf3fb;min-width:0}
+.tile>span{font-size:15px;font-weight:720;line-height:1.3}.tile strong{display:block;font-size:clamp(16px,4.55vw,19px);font-weight:850;line-height:1.2;white-space:nowrap;letter-spacing:-.45px;font-variant-numeric:tabular-nums}
+.tile-value-group,.tile-rent-body{height:56px;min-height:56px;display:flex;flex-direction:column;justify-content:flex-start;gap:5px;min-width:0;align-self:stretch}
+.tile-value-group>strong,.tile-rent-body>strong{height:25px;line-height:25px;flex:none}
+.green{color:var(--green)!important}.red{color:var(--red)!important}.blue{color:var(--blue)!important}.muted{color:var(--muted)!important}.gold{color:var(--gold)!important}
+.tile-rent-breakdown{display:grid;gap:1px;line-height:1.25;color:#afc1d6;min-height:26px}.tile .tile-rent-breakdown span{font-size:10.5px;font-weight:550;line-height:1.25;overflow-wrap:anywhere}.tile-rent-breakdown[hidden]{display:none}
+.tile .tile-meta{display:block;color:#8faac6;font-size:10.5px;line-height:1.25;font-weight:550;min-height:26px;overflow-wrap:anywhere}.demo-notice{color:#87a9d1}.demo-hero-note{font-size:10px;color:#a6c3df}
+.big-button{display:block;width:100%;min-height:56px;border:0;border-radius:13px;background:linear-gradient(120deg,#508dec,#3269bc);color:white;font-size:17px;font-weight:820}
+.sync-line{width:100%;border:0;background:transparent;color:var(--muted);padding:9px 0;font-size:11px;min-height:35px}
+.backline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:1px 0 12px}
+.back{border:1px solid #45617e;background:#1d3047;color:#edf4fb;min-height:39px;padding:7px 12px;border-radius:10px;font-weight:650}
+.detail-title{font-size:21px;font-weight:780;letter-spacing:-.3px;margin:0}
+.detail-hero{padding:16px;margin-bottom:10px}
+.hero-caption{font-size:12px;color:#c2d1e3;font-weight:700}.hero-total{font-size:clamp(26px,6vw,34px);font-weight:850;letter-spacing:-.7px;margin:4px 0 0;font-variant-numeric:tabular-nums}
+.hero-help{font-size:11px;color:#98acc3;margin:5px 0 0;line-height:1.45}
+.commission-hero{background:#361a23;border-color:#82414b}
+.detail-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:9px 2px;border-bottom:1px solid #2c4154;font-size:13px}
+.detail-row:last-child{border-bottom:0}.detail-row strong{font-variant-numeric:tabular-nums;white-space:nowrap}
+.compact-heading{font-size:16px;margin:17px 0 9px;font-weight:750}
+.small-label{font-size:11px;color:var(--muted);margin:7px 0 4px}
+.action-add{width:100%;min-height:42px;background:#1d3047;border:1px solid #46617c;border-radius:10px;color:#eaf4ff;font-weight:750;margin:8px 0}
+.form-box{margin:10px 0;padding:12px;border:1px solid #33475e;border-radius:14px;background:#152235}
+.form-title{font-size:14px;font-weight:750;margin:0 0 8px}
+.form-grid{display:grid;grid-template-columns:minmax(0,0.82fr) minmax(0,1.18fr);gap:8px;align-items:end}
+.input-label{display:block;min-width:0;font-size:11px;color:#a9bed4;font-weight:650}
+.input-label input,.input-label textarea,.input-label select{display:block;width:100%;min-width:0;height:42px;margin:4px 0 0;padding:9px 10px;border:1px solid #4a627a;border-radius:10px;background:#1d2d41;color:var(--txt);font-size:16px}
+.input-label textarea{height:43px;min-height:43px;resize:vertical;max-height:120px}
+.form-buttons{display:flex;gap:8px;margin-top:9px}.primary-small{background:#346fca;border:1px solid #5284cb;color:white;font-weight:800;border-radius:10px;min-height:42px;flex:1}.ghost-small{border:1px solid #48647d;background:#203146;color:var(--txt);border-radius:10px;min-height:42px;padding:6px 13px}
+.empty{font-size:12px;color:var(--muted);padding:8px 0}
+.records{display:grid;gap:7px;margin:6px 0}
+.record{background:#131f2e;border:1px solid #304054;border-radius:12px;overflow:hidden}
+.record-main{width:100%;display:block;border:0;background:transparent;color:var(--txt);padding:11px 12px;text-align:left;min-height:74px}
+.record-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.record-name{font-size:13px;font-weight:730;line-height:1.25;min-width:0}.record-amount{font-size:15px;white-space:nowrap;font-weight:850;font-variant-numeric:tabular-nums}
+.record-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;font-size:11px;color:var(--muted)}.record-bottom span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chevron{color:#9bb3ce;font-size:16px}
+.record-expanded{border-top:1px solid #304054;padding:10px 12px;color:#bbcee1;font-size:12px}.record-expanded p{margin:4px 0}
+.row-actions{display:flex;gap:8px;margin-top:9px}.row-actions button{border:1px solid #48647d;background:#23364b;color:#edf4fb;border-radius:9px;padding:7px 11px;font-size:12px;min-height:36px}
+.row-actions .delete{color:#ffb6c0;border-color:#8a4b5e}
+.commission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 5px}
+.commission-card{display:flex;flex-direction:column;justify-content:space-between;gap:8px;text-align:left;border:1px solid #435061;background:#162333;border-radius:13px;color:var(--txt);min-height:98px;padding:11px}.commission-card span{font-size:12px;line-height:1.25;font-weight:750}.commission-card strong{color:#ffb8c1;font-size:16px;font-weight:850;white-space:nowrap}.commission-card.selected{border-color:#d78b94;background:#3b222d}
+.filter-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0}.filter-line button{border:1px solid #48647d;background:#203146;color:var(--txt);border-radius:9px;min-height:36px;padding:5px 10px}.filter-line small{color:var(--muted)}
+.info-notice{font-size:11px;color:#b5c7dc;background:#182839;border:1px solid #2e435b;border-radius:10px;padding:9px 10px;margin:9px 0}
+.warn-notice{font-size:11px;color:#f0cfa9;background:#352b24;border:1px solid #604a37;border-radius:10px;padding:9px 10px;margin:9px 0}
+.simple-settings{display:grid;gap:7px}.simple-settings button{min-height:42px;border-radius:10px;background:#203248;color:var(--txt);border:1px solid #405d7b}
+.app.is-refreshing::before{content:"";position:fixed;inset:0;z-index:11;pointer-events:none;background:linear-gradient(115deg,transparent 12%,rgba(144,199,255,.22) 46%,transparent 82%);opacity:0;animation:taxicheck-refresh-flash .68s ease-in-out}
+.app.is-refreshing .panel,.app.is-refreshing .tile{animation:taxicheck-refresh-pulse .65s ease-in-out}
+.big-button.is-refreshing{position:relative;background:linear-gradient(120deg,#497cae,#325d8b)}
+.big-button.is-refreshing::after{content:"";display:inline-block;width:14px;height:14px;margin-left:10px;vertical-align:-2px;border:2px solid #ffffff73;border-top-color:#fff;border-radius:50%;animation:taxicheck-spinner .65s linear infinite}
+@keyframes taxicheck-refresh-flash{0%,100%{opacity:0}30%{opacity:.55}58%{opacity:.18}78%{opacity:.45}}
+@keyframes taxicheck-refresh-pulse{0%,100%{opacity:1}32%{opacity:.70}56%{opacity:.95}75%{opacity:.81}}
+@keyframes taxicheck-spinner{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.app.is-refreshing::before,.app.is-refreshing .panel,.app.is-refreshing .tile,.big-button.is-refreshing::after{animation:none!important}}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#244a5f;color:#f5fbff;border:1px solid #5e91aa;border-radius:11px;padding:9px 13px;box-shadow:0 8px 30px #0007;max-width:90vw;min-width:180px;text-align:center;font-size:12px;z-index:15;pointer-events:none}
+[hidden]{display:none!important}
+@media(min-width:700px){.app{padding-top:24px}.tile{min-height:144px;padding:19px}.tile strong{font-size:20px}.commission-card{min-height:110px}}
+@media(max-width:360px){.app{padding:13px 9px 28px}.tile{padding:14px 10px;min-height:137px}.tile>span{font-size:14px}.tile strong{font-size:clamp(14px,4.4vw,16.5px);letter-spacing:-.55px}.tile .tile-meta,.tile .tile-rent-breakdown span{font-size:10px}.net{padding:16px 11px;gap:8px}.net-caption{font-size:14px}.net-num{font-size:23px}.work-summary{padding-left:9px}.period-label{font-size:11px}.record-amount{font-size:14px}}
+/* TaxiCheck frosted-glass experiment: restrained dark glass, readable on mobile.
+   This is a CSS interpretation, not native iOS system Liquid Glass. */
+:root{
+ --glass-edge:rgba(194,221,249,.27);
+ --glass-inner:rgba(243,250,255,.18);
+ --glass-shadow:0 8px 25px rgba(0,5,16,.20),inset 0 1px 0 var(--glass-inner);
+}
+body{
+ background:
+  radial-gradient(ellipse 92% 58% at 85% -10%,rgba(59,104,161,.26),transparent 70%),
+  radial-gradient(ellipse 90% 65% at 6% 98%,rgba(20,107,123,.13),transparent 75%),
+  #0b121e;
+ background-attachment:fixed;
+}
+/* Content surfaces stay mostly opaque; light edge/reflection gives depth. */
+.panel,.tile,.shift-chip,.record,.commission-card,.form-box,.shift-file-card{
+ background:
+  linear-gradient(155deg,rgba(236,248,255,.085),rgba(178,207,238,.027) 42%,rgba(9,19,35,.065) 100%),
+  rgba(18,33,52,.79);
+ border-color:var(--glass-edge);
+ box-shadow:var(--glass-shadow);
+}
+.period-panel,.tile,.shift-chip,.net,.detail-hero{
+ -webkit-backdrop-filter:blur(12px) saturate(132%);
+ backdrop-filter:blur(12px) saturate(132%);
+}
+.tile,.shift-chip,.period-mode-tab,.commission-card{
+ position:relative;
+ overflow:hidden;
+}
+.tile::before,.shift-chip::before,.commission-card::before{
+ content:"";position:absolute;inset:0 0 auto;height:1px;pointer-events:none;
+ background:linear-gradient(90deg,transparent,rgba(245,252,255,.27) 28%,rgba(245,252,255,.11) 78%,transparent);
+}
+.tile{
+ background:
+  linear-gradient(155deg,rgba(239,249,255,.10) 0%,rgba(205,226,252,.037) 42%,rgba(9,19,35,.07) 100%),
+  rgba(19,34,53,.74);
+ border-color:rgba(190,217,244,.24);
+ box-shadow:0 9px 26px rgba(0,7,22,.25),inset 0 1px 0 rgba(250,252,255,.13);
+}
+.tile:active,.shift-chip:active{transform:scale(.989)}
+.shift-chip{
+ background:linear-gradient(157deg,rgba(226,244,255,.09),rgba(86,129,173,.045) 65%),rgba(24,41,62,.76);
+ border-color:rgba(185,216,249,.22);
+}
+.shift-chip.selected{
+ background:linear-gradient(140deg,rgba(153,203,255,.23),rgba(56,110,174,.13) 52%,rgba(29,62,100,.24)),rgba(29,53,82,.84);
+ border-color:rgba(159,211,255,.74);
+ box-shadow:0 5px 20px rgba(9,51,93,.22),inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(86,145,209,.20);
+}
+.period-mode-tabs{background:rgba(11,24,41,.64);border-color:rgba(176,207,240,.17)}
+.period-mode-tab.active{
+ background:linear-gradient(145deg,rgba(157,203,247,.19),rgba(52,101,152,.15)),rgba(40,73,110,.77);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 2px 8px rgba(4,12,31,.18);
+}
+#shiftModePanel .shift-editor-panel{
+ background:linear-gradient(160deg,rgba(222,239,255,.06),transparent 60%),rgba(15,30,48,.84);
+ border-color:rgba(168,205,241,.22);
+}
+.net{
+ background:
+  linear-gradient(143deg,rgba(190,255,219,.11),rgba(40,118,87,.07) 65%,rgba(13,51,47,.1)),
+  rgba(17,52,42,.84);
+ border-color:rgba(141,218,177,.29);
+ box-shadow:0 10px 28px rgba(0,13,20,.25),inset 0 1px 0 rgba(227,255,243,.16);
+}
+.net.alerted{border-color:rgba(255,142,161,.57)}
+.commission-card,.commission-hero{
+ background:linear-gradient(155deg,rgba(255,195,199,.075),transparent 65%),rgba(49,27,39,.79);
+ border-color:rgba(235,146,161,.29);
+}
+.commission-card.selected{border-color:rgba(255,174,191,.76);background:linear-gradient(152deg,rgba(255,174,191,.14),rgba(98,39,61,.14)),rgba(56,29,42,.85)}
+.record,.form-box{background:linear-gradient(155deg,rgba(242,248,255,.056),transparent 64%),rgba(17,31,49,.84)}
+.shift-file-card{background:rgba(20,36,55,.85)}
+.fake-native,.shift-edit-input,.input-label input,.input-label textarea,.input-label select{
+ background:rgba(18,34,53,.86);
+ border-color:rgba(174,207,243,.29);
+}
+.info-notice{background:rgba(20,40,60,.77);border-color:rgba(168,202,238,.20)}
+/* Keep the financial colors semantic, never wash them out with glass. */
+.net-num.green,.tile .green,.detail-row .green{color:var(--green)!important}
+.net-num.red,.tile .red,.detail-row .red{color:var(--red)!important}
+.tile .blue,.detail-row .blue{color:var(--blue)!important}
+/* Header navigation remains at the top left on all detail screens. */
+.header-main{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.header-detail-title{font-size:clamp(18px,5vw,22px);line-height:1.2;font-weight:790;letter-spacing:-.35px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.header-back{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:44px;min-width:94px;flex:none;padding:7px 14px 7px 9px;color:#eaf4ff;border-radius:999px;background:linear-gradient(150deg,rgba(218,236,255,.15),rgba(70,110,156,.12)),rgba(25,45,70,.82);border:1px solid rgba(192,219,246,.35);box-shadow:0 4px 16px rgba(0,8,24,.18),inset 0 1px 0 rgba(255,255,255,.14);font-size:14px;font-weight:710}
+.header-back span{font-size:29px;font-weight:400;line-height:17px;margin-top:-3px}
+.header.detail-nav{position:sticky;top:max(0px, env(safe-area-inset-top));z-index:12;margin:0 -7px 13px;padding:9px 7px;background:rgba(13,27,45,.91);border-radius:21px;-webkit-backdrop-filter:blur(14px) saturate(128%);backdrop-filter:blur(14px) saturate(128%);border:1px solid rgba(196,221,248,.16);box-shadow:0 8px 22px rgba(0,5,18,.23)}
+@media(prefers-reduced-transparency:reduce){.header.detail-nav{background:#142438;-webkit-backdrop-filter:none;backdrop-filter:none}}
+/* Rounder iOS-inspired capsule geometry. Large surfaces remain soft rectangles. */
+.panel{border-radius:25px}
+.period-panel{border-radius:28px}
+.tile{border-radius:29px}
+.net,.detail-hero{border-radius:29px}
+.shift-chip{border-radius:35px}
+.shift-editor-panel,#shiftModePanel .shift-editor-panel{border-radius:22px}
+.shift-editor-content{border-radius:0 0 22px 22px}
+.period-mode-tabs{border-radius:999px}
+.period-mode-tab{border-radius:999px}
+.record{border-radius:22px}
+.commission-card{border-radius:25px}
+.form-box{border-radius:24px}
+.shift-file-card{border-radius:20px}
+.shift-waybill-item{border-radius:17px}
+.fake-native,.shift-edit-input,.input-label input,.input-label textarea,.input-label select{border-radius:17px}
+.period-submit,.action-add,.primary-small,.ghost-small,.shift-edit-actions button,.shift-file-clear,.shift-waybill-remove,.row-actions button,.filter-line button,.simple-settings button,.review-action{border-radius:999px}
+.big-button{border-radius:999px;box-shadow:0 8px 23px rgba(35,87,179,.24),inset 0 1px 0 rgba(255,255,255,.19)}
+.gear,.back,.work-summary button{border-radius:20px}
+/* Fallback maintains readable solid backgrounds on devices without blur. */
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+ .panel,.tile,.shift-chip,.net,.record,.form-box,.commission-card,.shift-file-card{background-color:#182b40}
+ .net{background-color:#183b32}
+}
+@media(prefers-reduced-transparency:reduce){
+ .panel,.tile,.shift-chip,.record,.commission-card,.form-box,.shift-file-card{background:#18283d}
+ .period-panel,.tile,.shift-chip,.net,.detail-hero{-webkit-backdrop-filter:none;backdrop-filter:none}
+ .net{background:#163c31}.commission-card,.commission-hero{background:#321f2c}
+}
+@media(prefers-reduced-motion:reduce){
+ .tile:active,.shift-chip:active{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+ <header class="header" id="appHeader">
+  <div class="header-main">
+   <button class="back header-back" id="backHome" type="button" aria-label="Вернуться на главную" hidden><span aria-hidden="true">‹</span> Назад</button>
+   <div id="homeBrand"><h1>TaxiCheck</h1><div class="demo-tag">ИНТЕРАКТИВНЫЙ МАКЕТ · ЧАСТЬ ЦИФР ДЕМО</div></div>
+   <h2 class="header-detail-title" id="detailTitle" hidden>Касса</h2>
+  </div>
+  <button class="gear" id="gear" title="Настройки" aria-label="Настройки">⚙</button>
+ </header>
+
+ <div class="panel period-panel" id="periodPanel">
+  <div class="period-mode-tabs" role="group" aria-label="Выбор способа просмотра">
+   <button type="button" id="modeShifts" class="period-mode-tab active" aria-pressed="true">Смены</button>
+   <button type="button" id="modeCustom" class="period-mode-tab" aria-pressed="false">Свой период</button>
+  </div>
+  <div id="shiftModePanel">
+   <div class="period-line"><span class="period-label" id="periodLine">Смена · 22.10 00:00 → 22.10 23:59</span></div>
+   <div class="shift-ribbon" id="shiftRibbon" role="group" aria-label="Сохранённые смены: старые слева, текущая справа"></div>
+   <p class="shift-ribbon-note" id="shiftRibbonNote">Листайте смены влево · демо</p>
+   <div class="panel shift-editor-panel" id="shiftEditorPanel">
+    <button class="shift-editor-toggle" id="shiftEditToggle" aria-expanded="false"><span>Параметры смены</span><small id="shiftEditSummary">22.10 · 00:00–23:59 ▾</small></button>
+    <div class="shift-editor-content" id="shiftEditContent" hidden>
+     <p class="shift-edit-caption">Границы и данные выбранной смены · демонстрация</p>
+     <div class="shift-edit-row">
+      <div class="field-wrap"><span class="field-caption">Начало · дата</span><label class="fake-native"><span class="native-value" id="shiftFromDateText">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="shiftFromDate" aria-label="Дата начала смены"></label></div>
+      <div class="field-wrap"><span class="field-caption">Время</span><label class="fake-native"><span class="native-value" id="shiftFromTimeText">00:00</span><span class="native-symbol">◷</span><input type="time" id="shiftFromTime" aria-label="Время начала смены"></label></div>
+     </div>
+     <div class="shift-edit-row">
+      <div class="field-wrap"><span class="field-caption">Конец · дата</span><label class="fake-native"><span class="native-value" id="shiftToDateText">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="shiftToDate" aria-label="Дата завершения смены"></label></div>
+      <div class="field-wrap"><span class="field-caption">Время</span><label class="fake-native"><span class="native-value" id="shiftToTimeText">23:59</span><span class="native-symbol">◷</span><input type="time" id="shiftToTime" aria-label="Время завершения смены"></label></div>
+     </div>
+     <label class="shift-edit-label" style="margin-top:11px">Пробег за смену, км<input type="number" min="0" max="2500" step="1" inputmode="numeric" class="shift-edit-input" id="shiftMileage" placeholder="Например, 208"></label>
+     <p class="period-help" id="shiftEditHint" aria-live="polite"></p>
+     <div class="shift-files">
+      <div class="shift-file-card"><span class="shift-file-title">Одометр до смены</span><input class="shift-file-input" id="photoBefore" type="file" accept="image/*" aria-label="Фото одометра перед сменой"><div class="shift-file-current" id="photoBeforeStatus">Фото не добавлено</div><img class="shift-file-preview" id="photoBeforePreview" alt="Одометр до смены" hidden><button type="button" class="shift-file-clear" id="photoBeforeClear" hidden>Удалить фото</button></div>
+      <div class="shift-file-card"><span class="shift-file-title">Одометр после смены</span><input class="shift-file-input" id="photoAfter" type="file" accept="image/*" aria-label="Фото одометра после смены"><div class="shift-file-current" id="photoAfterStatus">Фото не добавлено</div><img class="shift-file-preview" id="photoAfterPreview" alt="Одометр после смены" hidden><button type="button" class="shift-file-clear" id="photoAfterClear" hidden>Удалить фото</button></div>
+      <div class="shift-file-card"><span class="shift-file-title">Путевые листы · до 2 фото</span><input class="shift-file-input" id="waybillFiles" type="file" accept="image/*,.pdf,application/pdf" multiple aria-label="Добавить до двух фотографий путевых листов"><div class="shift-file-current" id="waybillFilesStatus">Можно добавить 2 фото</div><div class="shift-waybill-list" id="waybillFilesList"></div><p class="period-help">Можно выбрать два снимка сразу или добавлять по одному. Загрузка из почты будет отдельной интеграцией.</p></div>
+     </div>
+     <p class="period-help">В этом публичном макете файлы только показываются в текущей вкладке. На сервер не передаются, после перезагрузки исчезают.</p>
+     <div class="shift-edit-actions"><button class="shift-edit-save" id="shiftEditSave">Сохранить в макете</button><button class="shift-edit-cancel" id="shiftEditCancel">Отмена</button></div>
+    </div>
+   </div>
+  </div>
+  <div id="customModePanel" hidden>
+   <p class="custom-period-summary" id="customPeriodSummary">Произвольный интервал</p>
+   <div id="periodEditor" class="period-editor">
+    <p class="period-editor-title">Выбранный период</p>
+    <div class="period-group">
+     <div class="field-wrap"><span class="field-caption">С даты</span><label class="fake-native"><span id="fromText" class="native-value">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="from" min="2026-10-14" value="2026-10-22" aria-label="Дата начала"></label></div>
+     <div class="field-wrap"><span class="field-caption">Со времени</span><label class="fake-native"><span id="timeFromText" class="native-value">00:00</span><span class="native-symbol">◷</span><input type="time" id="timeFrom" aria-label="Время начала"></label></div>
+    </div>
+    <div class="period-group">
+     <div class="field-wrap"><span class="field-caption">По дату</span><label class="fake-native"><span id="toText" class="native-value">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="to" min="2026-10-14" value="2026-10-22" aria-label="Дата окончания"></label></div>
+     <div class="field-wrap"><span class="field-caption">До времени</span><label class="fake-native"><span id="timeToText" class="native-value">23:59</span><span class="native-symbol">◷</span><input type="time" id="timeTo" aria-label="Время окончания"></label></div>
+    </div>
+    <button class="period-submit" id="periodShow">Показать</button>
+    <p class="period-help">Москва · изменение дат или времени переводит в «Свой период». Временные границы смен редактируются на главном экране. История операций по часам в макете отсутствует.</p>
+   </div>
+  </div>
+ </div>
+ <div class="mini-note demo-notice" id="globalNotice">Демонстрация: все суммы и операции полностью вымышлены. Нет связи с Апарк, Google и реальными сменами.</div>
+ <main id="home">
+  <section class="panel net" id="netCard" role="button" tabindex="0"><div><div class="net-caption">Чистый заработок</div><div class="net-figure"><strong class="net-num" id="netNum">8 838,10 ₽</strong><button class="net-alert" id="netAlert" title="Почему предварительно">!</button></div><p class="net-note" id="netSub">Предварительно</p></div><div class="work-summary"><span>Рабочее время</span><strong id="workValue">—</strong><span>Чистыми в час</span><strong id="hourValue">—</strong><button id="workButton">Изменить</button></div></section>
+  <div class="tiles" id="tileGrid">
+   <button class="tile" data-screen="cash"><span>Касса</span><div class="tile-value-group"><strong id="tileCash" class="green">15 987,80 ₽</strong><small class="tile-meta" id="tileCashMeta">MAIN + демо-наличные</small></div></button>
+   <button class="tile" data-screen="commissions"><span>Комиссии</span><div class="tile-value-group"><strong id="tileCommissions" class="red">2 663,45 ₽</strong><small class="tile-meta">Удержания MAIN</small></div></button>
+   <button class="tile" data-screen="rent"><span>Аренда</span><div class="tile-rent-body"><strong id="tileRent">3 100,00 ₽</strong><div class="tile-rent-breakdown" id="tileRentSplit"><span id="tileRentBonus">Бонусами 1 250,00 ₽</span><span id="tileRentMain">Деньгами 1 850,00 ₽</span></div></div></button>
+   <button class="tile" data-screen="fuel"><span>Заправки</span><div class="tile-value-group"><strong id="tileFuel">2 396,25 ₽</strong><small class="tile-meta" id="tileFuelMeta">Демо · 35,50 л</small></div></button>
+   <button class="tile" data-screen="other"><span>Прочие расходы</span><div class="tile-value-group"><strong id="tileOther">240,00 ₽</strong><small class="tile-meta" id="tileOtherMeta">Демо · 2 расхода</small></div></button>
+   <button class="tile" data-screen="bonuses"><span>Бонусы</span><div class="tile-value-group"><strong id="tileBonuses" class="blue">1 250,00 ₽</strong><small class="tile-meta">Покрытие аренды</small></div></button>
+   <button class="tile" data-screen="mileage"><span>Пробег</span><div class="tile-value-group"><strong id="tileMileage">216 км</strong><small class="tile-meta" id="tileMileageMeta">Пробег смены · демо</small></div></button>
+   <button class="tile" data-screen="consumption"><span>Расход авто</span><div class="tile-value-group"><strong id="tileConsumption">9,2 л/100 км</strong><small class="tile-meta">Накопительный · демо</small></div></button>
+  </div>
+ </main>
+ <main id="detail" hidden>
+  
+  <div class="panel detail-hero" id="detailHero"><div class="hero-caption" id="heroCaption">Касса</div><div class="hero-total" id="heroTotal">—</div><p class="hero-help" id="heroHelp"></p></div>
+  <div id="detailContent"></div>
+ </main>
+ <button class="big-button" id="refreshBtn">Обновить</button>
+ <button class="sync-line" id="syncStatus">Демо-режим · реальные данные не обновляются</button>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+(()=>{'use strict';
+const $=s=>document.querySelector(s), money=n=>typeof n==='number'&&Number.isFinite(n)?n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽':'Нет данных';
+const signed=n=>n<0?'−'+money(Math.abs(n)):'+'+money(n);
+// Synthetic finances, not real Apark/driver transactions.
+const demoShiftFinancials={
+ s18:{cash:16190.40,fees:2524.60,rent:3100.00,bonus:0,commission:[1670.20,350.80,380.40,123.20]},
+ s19:{cash:16158.40,fees:2650.20,rent:2400.00,bonus:700.00,commission:[1745.20,390.00,380.00,135.00]},
+ s20:{cash:14575.80,fees:2640.20,rent:1675.00,bonus:1425.00,commission:[1770.10,390.10,355.00,125.00]},
+ s21:{cash:16220.40,fees:2880.20,rent:2200.00,bonus:900.00,commission:[1902.10,418.10,420.00,140.00]}
+};
+const dates={
+ '2026-10-18':demoShiftFinancials.s18,
+ '2026-10-19':demoShiftFinancials.s19,
+ '2026-10-20':demoShiftFinancials.s20,
+ '2026-10-21':demoShiftFinancials.s21,
+ '2026-10-22':{cash:14237.80,fees:2663.45,rent:1850.00,bonus:1250.00,commission:[1814.20,398.85,305.60,144.80]},
+ '2026-10-24':{cash:14815.60,fees:2822.20,rent:3100.00,bonus:0,commission:[1950.40,429.60,316.20,126.00]},
+ '2026-10-31':{cash:12930.30,fees:2420.10,rent:1900.00,bonus:1200.00,commission:[1642.50,372.30,291.20,114.10]}
+};
+const demoShiftCashGroups={
+ s18:[{time:'13:40',amount:5230.10},{time:'17:55',amount:5700.20},{time:'21:20',amount:5260.10}],
+ s19:[{time:'14:10',amount:5115.15},{time:'18:35',amount:5260.25},{time:'22:20',amount:5783.00}],
+ s20:[{time:'14:05',amount:4790.35},{time:'18:15',amount:5065.45},{time:'21:40',amount:4720.00}],
+ s21:[{time:'14:25',amount:5360.15},{time:'18:05',amount:5200.25},{time:'22:05',amount:5660.00}]
+};
+// Future newly created shift: an explicit known zero is not the same as missing history.
+const FULL_DAILY_RENT=3100;
+function createEmptyShiftFinances(){
+ return {cash:0,fees:0,rent:FULL_DAILY_RENT,bonus:0,commission:[0,0,0,0]};
+}
+function allKnownForNet(d){return !!d&&['cash','fees','rent','bonus'].every(k=>Number.isFinite(d[k]));}
+function missingFinanceFields(d){return !d?['касса','комиссии','аренда']:['cash','fees','rent'].filter(k=>!Number.isFinite(d[k])).map(k=>({cash:'касса',fees:'комиссии',rent:'списания аренды'}[k]));}
+const commissionNames=['Комиссия за заказы','НДС','Мой район / По делам','Точка Б / Гибкий'];
+const titles={cash:'Касса',commissions:'Комиссии',rent:'Аренда',fuel:'Заправки',other:'Прочие расходы',bonuses:'Бонусы',mileage:'Пробег',consumption:'Расход авто',earnings:'Чистый заработок',work:'Рабочее время',settings:'Настройки',sync:'Синхронизация'};
+const demoCashRecords22=[
+ {id:'fake-cash-1',type:'cash',title:'Группа заказов · демо',time:'23:49',amount:4812.30,sub:'Вымышленные поездки',desc:'Полностью вымышленная группа заказов. Не выгрузка из Апарка.'},
+ {id:'fake-cash-2',type:'cash',title:'Группа заказов · демо',time:'17:10',amount:4907.60,sub:'Вымышленные поездки',desc:'Полностью вымышленная группа заказов. Не выгрузка из Апарка.'},
+ {id:'fake-cash-3',type:'cash',title:'Группа заказов · демо',time:'11:18',amount:4517.90,sub:'Вымышленные поездки',desc:'Полностью вымышленная группа заказов. Не выгрузка из Апарка.'}
+];
+const demoFeeRecords22=[
+ {title:'Комиссия за заказы',cat:0,time:'23:47',amount:-610.10},
+ {title:'Мой район / По делам',cat:2,time:'23:47',amount:-155.60},
+ {title:'НДС',cat:1,time:'23:47',amount:-134.40},
+ {title:'Комиссия за заказы',cat:0,time:'17:09',amount:-598.35},
+ {title:'Точка Б / Гибкий',cat:3,time:'17:09',amount:-144.80},
+ {title:'НДС',cat:1,time:'17:09',amount:-132.10},
+ {title:'Комиссия за заказы',cat:0,time:'11:17',amount:-605.75},
+ {title:'Мой район / По делам',cat:2,time:'11:17',amount:-150.00},
+ {title:'НДС',cat:1,time:'11:17',amount:-132.35}
+];
+// Display-only example records. Not from Apark or any connected Google Sheet.
+const exampleRecords=[
+ {id:'demo-cash-1',date:'2026-10-22',type:'cash',title:'Наличный заказ № 1 · демо',time:'18:05',amount:1000,comment:'Заказ без агрегатора · демо'},
+ {id:'demo-cash-2',date:'2026-10-22',type:'cash',title:'Наличный заказ № 2 · демо',time:'20:40',amount:750,comment:'Самостоятельный заказ · демо'},
+ {id:'demo-fuel-1',date:'2026-10-22',type:'fuel',title:'Заправка · демо',time:'16:30',amount:2396.25,litres:35.50,price:67.50,comment:'АЗС · вымышленная покупка'},
+ {id:'demo-other-1',date:'2026-10-22',type:'other',title:'Путевой лист · демо',time:'09:10',amount:125,comment:'Документы · демо'},
+ {id:'demo-other-2',date:'2026-10-22',type:'other',title:'Прочий расход · демо',time:'14:15',amount:115,comment:'Дополнительный расход · демо'}
+];
+const extraDemoRecords=[
+ ['s18','2026-10-18','cash',650,'19:30','Наличный заказ · демо','Вымышленный заказ'],
+ ['s18','2026-10-18','fuel',2356.13,'16:15','Заправка · демо','АЗС · 34,70 л'],
+ ['s18','2026-10-18','other',145,'12:05','Путевой лист · демо','Документы'],
+ ['s18','2026-10-18','other',135,'18:10','Рабочая мелочь · демо','Дополнительные расходы'],
+ ['s19','2026-10-19','fuel',2010.68,'17:45','Заправка · демо','АЗС · 30,10 л'],
+ ['s19','2026-10-19','other',150,'12:15','Путевой лист · демо','Документы'],
+ ['s19','2026-10-19','other',280,'20:25','Дополнительный расход · демо','Парковка и услуги'],
+ ['s20','2026-10-20','cash',500,'21:10','Наличный заказ · демо','Вымышленный заказ'],
+ ['s20','2026-10-20','fuel',1723.68,'18:20','Заправка · демо','АЗС · 25,65 л'],
+ ['s20','2026-10-20','other',145,'12:40','Путевой лист · демо','Документы'],
+ ['s20','2026-10-20','other',235,'19:40','Рабочий расход · демо','Мелкие расходы'],
+ ['s21','2026-10-21','fuel',2476.64,'19:35','Заправка · демо','АЗС · 36,80 л'],
+ ['s21','2026-10-21','other',145,'11:40','Путевой лист · демо','Документы'],
+ ['s21','2026-10-21','other',145,'22:25','Путевой лист № 2 · демо','Документы']
+].map(([shiftId,date,type,amount,time,title,comment],i)=>({id:'demo-shift-extra-'+i,shiftId,date,type,amount,time,title,comment,...(type==='fuel'?{litres:{s18:34.70,s19:30.10,s20:25.65,s21:36.80}[shiftId],price:{s18:67.90,s19:66.80,s20:67.20,s21:67.30}[shiftId]}:{})}));
+exampleRecords.forEach(r=>r.shiftId='s22');
+exampleRecords.push(...extraDemoRecords);
+// Демонстрационная лента. Даты и пробеги не являются подтверждёнными сменами.
+function plusMinutes(date,time,delta){const x=new Date(date+'T'+time+':00Z');x.setUTCMinutes(x.getUTCMinutes()+delta);return {date:x.toISOString().slice(0,10),time:x.toISOString().slice(11,16)}}
+const demoShifts=[{id:'s18',from:'2026-10-18',start:'00:00',to:'2026-10-18',end:'23:00',mileage:176,workMinutes:720,files:{}},{id:'s19',from:'2026-10-19',start:'00:00',to:'2026-10-19',end:'23:00',mileage:246,workMinutes:735,files:{}},{id:'s20',from:'2026-10-20',start:'00:00',to:'2026-10-20',end:'23:00',mileage:193,workMinutes:660,files:{}},{id:'s21',from:'2026-10-21',start:'00:00',to:'2026-10-21',end:'23:00',mileage:222,workMinutes:760,files:{}},{id:'s22',from:'2026-10-22',start:'00:00',to:'2026-10-22',end:'23:59',mileage:216,workMinutes:705,files:{}}];
+const defaultDemoShifts=demoShifts.map(s=>({...s,files:{}}));
+const state={screen:'home',date:'2026-10-22',periodMode:'shift',selectedShiftId:'s22',lastShiftId:'s22',customPeriod:null,periodDirty:false,filter:-1,manual:exampleRecords.map(r=>({...r})),expanded:new Set(),openForm:false,editId:null,fuelDemo:false,workMinutes:705,mileageKm:216,consumptionLper100:9.2,pendingFiles:null,refreshing:false,cashZeroConfirmed:{}};
+function selectedShift(){return state.periodMode==='shift'?demoShifts.find(x=>x.id===state.selectedShiftId)||null:null}
+function selectedMinutes(){const sh=selectedShift();return sh?sh.workMinutes:null}
+// Compute a complete plan first; never mutate documented boundaries on a failed validation.
+function shiftBoundaryPlan(shifts,index,from,start,to,end){
+ const stamp=(d,t)=>d+'T'+t;
+ if(!from||!start||!to||!end||stamp(from,start)>=stamp(to,end))return {error:'Конец смены должен быть позже начала'};
+ if(index<0||index>=shifts.length)return {error:'Смена не найдена'};
+ const plan=shifts.map(s=>({...s}));
+ Object.assign(plan[index],{from,start,to,end});
+ const impacts=[];
+ if(index>0){
+  const prev=plan[index-1],prevEnd=plusMinutes(from,start,-60);
+  if(stamp(prev.from,prev.start)>=stamp(prevEnd.date,prevEnd.time))return {error:'Новое начало не оставляет времени предыдущей смене. Выбери начало позже.'};
+  prev.to=prevEnd.date;prev.end=prevEnd.time;
+  impacts.push({which:'previous',date:prev.to,time:prev.end});
+ }
+ if(index<plan.length-1){
+  const next=plan[index+1],nextStart=plusMinutes(to,end,60);
+  if(stamp(nextStart.date,nextStart.time)>=stamp(next.to,next.end))return {error:'Новый конец не оставляет времени следующей смене. Выбери конец раньше.'};
+  next.from=nextStart.date;next.start=nextStart.time;
+  impacts.push({which:'next',date:next.from,time:next.start});
+ }
+ return {plan,impacts};
+}
+function shiftEditPreview(){
+ const sh=selectedShift();if(!sh)return;
+ const [from,start,to,end]=['shiftFromDate','shiftFromTime','shiftToDate','shiftToTime'].map(id=>$('#'+id).value);
+ const outcome=shiftBoundaryPlan(demoShifts,demoShifts.indexOf(sh),from,start,to,end);
+ if(outcome.error){$('#shiftEditHint').textContent=outcome.error;return}
+ const p=outcome.impacts.find(x=>x.which==='previous'),n=outcome.impacts.find(x=>x.which==='next');
+ const parts=[];
+ if(p)parts.push('Предыдущая закончится '+dateShort(p.date)+' в '+p.time);
+ if(n)parts.push('Следующая начнётся '+dateShort(n.date)+' в '+n.time);
+ $('#shiftEditHint').textContent=parts.length?parts.join(' · ')+'. Часовой буфер сохраняется.':'Границы первой и единственной смены можно изменить.';
+}
+function shiftChipDates(sh){const crosses=sh.from!==sh.to;return {start:dateShort(sh.from),end:crosses?'→ '+dateShort(sh.to):'',crosses}}
+function syncRibbon(){const selected=selectedShift();for(const b of $('#shiftRibbon').querySelectorAll('[data-shift-id]')){const sh=demoShifts.find(x=>x.id===b.dataset.shiftId),yes=!!selected&&b.dataset.shiftId===selected.id;b.classList.toggle('selected',yes);b.setAttribute('aria-pressed',String(yes));if(sh){const dates=shiftChipDates(sh);b.classList.toggle('cross-day',dates.crosses);b.querySelector('.shift-chip-date-start').textContent=dates.start;b.querySelector('.shift-chip-date-end').textContent=dates.end;b.setAttribute('aria-label',(sh.id==='s22'?'Текущая смена':'Смена')+': '+dateText(sh.from)+' '+sh.start+' — '+dateText(sh.to)+' '+sh.end)}}$('#shiftRibbonNote').textContent=selected?'Смены · демо. Старые слева, текущая справа':'Свой период · для пробега выберите смену';$('#shiftModePanel').hidden=state.periodMode!=='shift';$('#customModePanel').hidden=state.periodMode!=='custom';for(const [id,on] of [['modeShifts',state.periodMode==='shift'],['modeCustom',state.periodMode==='custom']]){const b=$('#'+id);b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}$('#shiftEditorPanel').hidden=!selected||state.screen!=='home';if(selected)$('#shiftEditSummary').textContent=dateShort(selected.to)+' · '+selected.start+'–'+selected.end+' ▾';else closeShiftEditor()}
+function renderShiftRibbon(){const r=$('#shiftRibbon');r.innerHTML=demoShifts.map(sh=>'<button type="button" class="shift-chip" data-shift-id="'+sh.id+'" aria-pressed="false"><span class="shift-chip-dates"><strong class="shift-chip-date-start"></strong><span class="shift-chip-date-end"></span></span><span class="shift-chip-kind">'+(sh.id==='s22'?'Текущая · демо':'Смена · демо')+'</span></button>').join('');syncRibbon();r.scrollLeft=r.scrollWidth}
+function fillShiftForm(){const sh=selectedShift();if(!sh)return;for(const [id,value] of [['shiftFromDate',sh.from],['shiftFromTime',sh.start],['shiftToDate',sh.to],['shiftToTime',sh.end]])$('#'+id).value=value;$('#shiftMileage').value=Number.isFinite(sh.mileage)?String(sh.mileage):'';updateShiftInputLabels();state.pendingFiles={...sh.files};for(const type of ['photoBefore','photoAfter']){const input=$('#'+type);input.value='';updateFilePreview(type)}$('#waybillFiles').value='';updateWaybillList()}
+function updateShiftInputLabels(){for(const [id,out] of [['shiftFromDate','shiftFromDateText'],['shiftToDate','shiftToDateText']])$('#'+out).textContent=dateText($('#'+id).value);for(const [id,out] of [['shiftFromTime','shiftFromTimeText'],['shiftToTime','shiftToTimeText']])$('#'+out).textContent=$('#'+id).value||'—';shiftEditPreview()}
+function discardPendingFiles(){const sh=selectedShift();const old=Object.values(sh?.files||{}).flat();for(const x of Object.values(state.pendingFiles||{}).flat()){if(x&&x.url&&!old.includes(x))URL.revokeObjectURL(x.url)}state.pendingFiles=null}
+function closeShiftEditor(){if(state.pendingFiles)discardPendingFiles();$('#shiftEditContent').hidden=true;$('#shiftEditToggle').setAttribute('aria-expanded','false')}
+function chooseShift(id){const sh=demoShifts.find(x=>x.id===id);if(!sh)return;if(state.periodMode==='custom')saveCustomPeriodDraft();closeShiftEditor();state.periodMode='shift';state.selectedShiftId=id;state.lastShiftId=id;$('#from').value=sh.from;$('#timeFrom').value=sh.start;$('#to').value=sh.to;$('#timeTo').value=sh.end;syncRibbon();updateDateLabels();applyPeriod()}
+function saveCustomPeriodDraft(){const from=$('#from').value,to=$('#to').value,timeFrom=$('#timeFrom').value,timeTo=$('#timeTo').value;if(from&&to)state.customPeriod={from,to,timeFrom,timeTo}}
+function showCustomPeriod(){if(state.periodMode==='custom'){syncRibbon();return}closeShiftEditor();const chosen=state.customPeriod;state.periodMode='custom';state.selectedShiftId=null;if(chosen){$('#from').value=chosen.from;$('#to').value=chosen.to;$('#timeFrom').value=chosen.timeFrom;$('#timeTo').value=chosen.timeTo}syncRibbon();updateDateLabels();applyPeriod()}
+function showShiftPeriod(){if(state.periodMode==='shift'){syncRibbon();return}chooseShift(state.lastShiftId||demoShifts[demoShifts.length-1].id)}
+function effectiveShiftFile(sh,id){if(!sh)return null;const own=state.pendingFiles&&sh===selectedShift()?state.pendingFiles[id]:sh.files[id];if(own)return {data:own,inherited:false};if(id==='photoBefore'){const index=demoShifts.indexOf(sh);if(index>0){const prev=demoShifts[index-1];if(prev.files.photoAfter)return {data:prev.files.photoAfter,inherited:true}}}return null}
+function updateFilePreview(id){const sh=selectedShift(),result=effectiveShiftFile(sh,id),file=result?.data,status=$('#'+id+'Status'),image=$('#'+id+'Preview'),clear=$('#'+id+'Clear');status.textContent=file?(result.inherited?'Автоматически из прошлой смены: ':'')+file.name:(id==='photoBefore'?'Нет фото. Если прошлую смену завершить фото, оно появится здесь.':'Файл не добавлен');if(image){image.hidden=!(file&&file.type.startsWith('image/'));if(!image.hidden)image.src=file.url;else image.removeAttribute('src')}clear.hidden=!file||result.inherited}
+function updateWaybillList(){const list=$('#waybillFilesList'),input=$('#waybillFiles'),files=state.pendingFiles?.waybillFiles||[];list.replaceChildren();$('#waybillFilesStatus').textContent=files.length+' из 2 фото/файлов';input.disabled=files.length>=2;files.forEach((file,index)=>{const item=document.createElement('div');item.className='shift-waybill-item';if(file.type.startsWith('image/')){const thumb=document.createElement('img');thumb.src=file.url;thumb.alt='Путевой лист '+(index+1);item.appendChild(thumb)}const name=document.createElement('span');name.className='shift-waybill-name';name.textContent=(index+1)+'. '+file.name;item.appendChild(name);const remove=document.createElement('button');remove.type='button';remove.className='shift-waybill-remove';remove.dataset.waybillRemove=String(index);remove.textContent='Удалить';item.appendChild(remove);list.appendChild(item)})}
+function saveShiftEditor(){const sh=selectedShift();if(!sh)return;const [from,start,to,end]=['shiftFromDate','shiftFromTime','shiftToDate','shiftToTime'].map(id=>$('#'+id).value),mileageRaw=$('#shiftMileage').value.trim();const mi=mileageRaw===''?null:Number(mileageRaw);if(mi!==null&&(!Number.isFinite(mi)||mi<0||mi>2500)){toast('Проверь пробег');return}const outcome=shiftBoundaryPlan(demoShifts,demoShifts.indexOf(sh),from,start,to,end);if(outcome.error){toast(outcome.error);shiftEditPreview();return}const kept=Object.values(state.pendingFiles||{}).flat();for(const old of Object.values(sh.files||{}).flat()){if(old&&old.url&&!kept.includes(old))URL.revokeObjectURL(old.url)}outcome.plan.forEach((p,i)=>Object.assign(demoShifts[i],p));sh.files={...state.pendingFiles};state.pendingFiles=null;sh.mileage=mi;$('#from').value=sh.from;$('#to').value=sh.to;$('#timeFrom').value=sh.start;$('#timeTo').value=sh.end;closeShiftEditor();syncRibbon();updateDateLabels();applyPeriod();toast(outcome.impacts.length?'Время смены и соседние границы обновлены':'Границы смены обновлены')}
+function restoreDemoDefaults(){
+ closeShiftEditor();
+ const released=new Set();
+ for(const shift of demoShifts){for(const file of Object.values(shift.files||{}).flat()){if(file?.url&&!released.has(file.url)){URL.revokeObjectURL(file.url);released.add(file.url)}}}
+ defaultDemoShifts.forEach((original,i)=>Object.assign(demoShifts[i],{...original,files:{}}));
+ state.date='2026-10-22';state.periodMode='shift';state.selectedShiftId='s22';state.lastShiftId='s22';state.customPeriod=null;state.periodDirty=false;state.cashZeroConfirmed={};
+ state.manual=exampleRecords.map(r=>({...r}));state.expanded.clear();state.filter=-1;state.openForm=false;state.editId=null;state.fuelDemo=false;state.workMinutes=705;state.mileageKm=216;state.consumptionLper100=9.2;state.screen='home';
+ const active=demoShifts.find(s=>s.id==='s22');
+ $('#from').value=active.from;$('#to').value=active.to;$('#timeFrom').value=active.start;$('#timeTo').value=active.end;
+ $('#globalNotice').textContent='ДЕМО-СМЕНА 22.10: вымышленные начисления и расходы восстановлены. Синхронизации с Апарк и Google нет.';
+ $('#shiftEditContent').hidden=true;$('#shiftEditToggle').setAttribute('aria-expanded','false');
+ $('#waybillFiles').disabled=false;$('#waybillFiles').value='';
+ for(const id of ['photoBefore','photoAfter'])$('#'+id).value='';
+ renderShiftRibbon();updateDateLabels();render();
+}
+function demoRefresh(){
+ if(state.refreshing)return;
+ state.refreshing=true;
+ const button=$('#refreshBtn');
+ button.disabled=true;button.classList.add('is-refreshing');button.setAttribute('aria-busy','true');button.textContent='Обновляем макет';
+ $('.app').classList.add('is-refreshing');
+ if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)window.scrollTo(0,0);
+ else window.scrollTo({top:0,behavior:'smooth'});
+ setTimeout(()=>{
+  try{restoreDemoDefaults();window.scrollTo({top:0,behavior:'auto'})}
+  finally{
+   button.classList.remove('is-refreshing');$('.app').classList.remove('is-refreshing');
+   button.textContent='Обновить';button.disabled=false;button.removeAttribute('aria-busy');state.refreshing=false;
+  }
+ },680);
+}
+function toast(s){const n=$('#toast');n.textContent=s;n.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>n.hidden=true,2500);}
+function dateText(d){if(!d)return'—';const a=d.split('-');return a[2]+'.'+a[1]+'.'+a[0]}
+function dateShort(d){if(!d)return'—';const a=d.split('-');return a[2]+'.'+a[1]}
+function updateDateLabels(){for(const [key,id] of [['from','fromText'],['to','toText']])$('#'+id).textContent=dateText($('#'+key).value);$('#timeFromText').textContent=$('#timeFrom').value||'00:00';$('#timeToText').textContent=$('#timeTo').value||'23:59';const text=(selectedShift()?'Смена · ':'Свой период · ')+dateShort($('#from').value)+' '+($('#timeFrom').value||'00:00')+' → '+dateShort($('#to').value)+' '+($('#timeTo').value||'23:59');$('#periodLine').textContent=text;$('#customPeriodSummary').textContent='Интервал: '+dateShort($('#from').value)+' – '+dateShort($('#to').value)}
+function isExact(){return $('#from').value===$('#to').value&&(!$('#timeFrom').value||$('#timeFrom').value==='00:00')&&(!$('#timeTo').value||$('#timeTo').value==='23:59')}
+// Historical absence of records is not a verified zero. Project a value, but keep an explicit review item.
+const MAX_PERIOD_DAYS=62;
+function requestedCalendarDays(){
+ const from=$('#from').value||state.date,to=$('#to').value||state.date;
+ const start=Date.parse(from+'T12:00:00Z'),end=Date.parse(to+'T12:00:00Z');
+ if(!Number.isFinite(start)||!Number.isFinite(end)||start>end)return 0;
+ return Math.round((end-start)/86400000)+1;
+}
+function selectedCalendarDates(){
+ const days=requestedCalendarDays();
+ // Never silently truncate a financial range or report an incomplete total.
+ if(!days||days>MAX_PERIOD_DAYS)return [];
+ const from=$('#from').value||state.date;
+ const result=[],cur=new Date(from+'T12:00:00Z');
+ for(let i=0;i<days;i++){result.push(cur.toISOString().slice(0,10));cur.setUTCDate(cur.getUTCDate()+1)}
+ return result;
+}
+function calendarData(){
+ const days=selectedCalendarDates(),entries=days.map(day=>dates[day]||null);
+ if(!entries.some(Boolean))return null;
+ const sum=k=>{const known=entries.filter(e=>Number.isFinite(e?.[k]));return known.length?Math.round(known.reduce((a,e)=>a+e[k],0)*100)/100:null};
+ const commission=Array.from({length:4},(_,i)=>Math.round(entries.reduce((a,e)=>a+(Number.isFinite(e?.commission?.[i])?e.commission[i]:0),0)*100)/100);
+ return {cash:sum('cash'),fees:sum('fees'),rent:sum('rent'),bonus:sum('bonus'),commission};
+}
+function financeView(){
+ const shift=selectedShift(),days=shift?[shift.from]:selectedCalendarDates();
+ const segments=shift?[{date:shift.from,info:dayData(),key:shift.id}]:days.map(date=>({date,info:dates[date]||null,key:date}));
+ const notes=[],moneyRounded=n=>Math.round(n*100)/100;
+ let cash=0,fees=0,rentMain=0,bonus=0,expectedDays=0;
+ for(const {date,info,key} of segments){
+  const title=dateText(date),hasBase=!!info;
+  const cashUnknown=!Number.isFinite(info?.cash);
+  const feeUnknown=!Number.isFinite(info?.fees);
+  const bonusUnknown=!Number.isFinite(info?.bonus);
+  const rentUnknown=!Number.isFinite(info?.rent);
+  const knownBonus=bonusUnknown?0:info.bonus;
+  const cashVerified=!cashUnknown||(!shift&&state.cashZeroConfirmed[key]===true);
+  cash+=cashUnknown?0:info.cash;
+  fees+=feeUnknown?0:info.fees;
+  rentMain+=rentUnknown?Math.max(0,FULL_DAILY_RENT-knownBonus):info.rent;
+  bonus+=knownBonus;
+  if(rentUnknown)expectedDays++;
+  if(!hasBase){notes.push(cashVerified?title+': история операций не загружена; касса 0 ₽ подтверждена вручную, но комиссии и бонусы не проверены, аренда плановая.':title+': история операций не загружена; касса и комиссии пока условно 0 ₽, аренда плановая.');continue}
+  if(!cashVerified)notes.push(title+': касса отсутствует в выгрузке, временно принимаем 0 ₽. Подтверди отсутствие заказов или загрузи кассу.');
+  if(feeUnknown)notes.push(title+': комиссии не подтверждены, временно 0 ₽.');
+  if(bonusUnknown)notes.push(title+': бонусный баланс не проверен, временно 0 ₽.');
+  if(rentUnknown)notes.push(title+': денежная аренда не подтверждена; расчётная часть '+money(Math.max(0,FULL_DAILY_RENT-knownBonus))+' после бонусов.');
+ }
+ if(!shift&&!isExact())notes.push('Данные за выбранные часы не распределены: оценка строится по календарным дням целиком.');
+ if(!segments.length)notes.push(requestedCalendarDays()>MAX_PERIOD_DAYS?'Выбранный период превышает 62 календарных дня. Расчёт не выполняется; сократи диапазон.':'Не удалось определить календарные даты для расчёта.');
+ const cashManual=manualSum('cash'),fuel=manualSum('fuel'),other=manualSum('other');
+ const net=segments.length?moneyRounded(cash+cashManual-fees-rentMain-fuel-other):null;
+ return {net,cash:moneyRounded(cash+cashManual),cashMain:moneyRounded(cash),fees:moneyRounded(fees),rentMain:moneyRounded(rentMain),bonus:moneyRounded(bonus),fullRent:moneyRounded(rentMain+bonus),fuel,other,notes,expectedDays,days,shift,provisional:notes.length>0};
+}
+function dayData(){const sh=selectedShift();if(sh)return sh.id==='s22'?dates['2026-10-22']:demoShiftFinancials[sh.id]||null;return calendarData()}
+function dayManual(type){const sh=selectedShift();const days=sh?null:selectedCalendarDates();return state.manual.filter(r=>r.type===type&&(sh?r.shiftId===sh.id:days.includes(r.date)))}
+function manualSum(type){return dayManual(type).reduce((a,r)=>a+r.amount,0)}
+function litresPurchased(){return dayManual('fuel').reduce((sum,r)=>sum+(Number.isFinite(r.litres)?r.litres:0),0)}
+function demoDay(){const sh=selectedShift();return sh?.id==='s22'||!sh&&state.date==='2026-10-22'&&isExact()}
+function computed(){const d=dayData(),v=financeView();return {d,fuel:v.fuel,other:v.other,cash:v.cash-v.cashMain,net:v.net,view:v}}
+function hasValidDay(){return Boolean(dayData())}
+function rentSummary(d){if(!d||!Number.isFinite(d.rent)||!Number.isFinite(d.bonus)||d.rent<0||d.bonus<0)return null;return {full:Math.round((d.rent+d.bonus)*100)/100,main:d.rent,bonus:d.bonus}}
+function renderHome(){const {view:v}=computed(),net=v.net;$('#netNum').textContent=net===null?'—':money(net);$('#netNum').classList.toggle('red',Number.isFinite(net)&&net<0);$('#netNum').classList.toggle('green',Number.isFinite(net)&&net>=0);$('#netAlert').hidden=!v.provisional;$('#netCard').classList.toggle('alerted',v.provisional);$('#netAlert').title=v.provisional?'Требует проверки: '+v.notes.length+' пунктов':'Нет предупреждений';$('#netSub').textContent=v.provisional?'Оценка · требует проверки ('+v.notes.length+')':demoDay()?'Предварительно · с демо-расходами':'Предварительный результат';const mins=selectedMinutes();$('#workValue').textContent=mins===null?'—':Math.floor(mins/60)+' ч '+(mins%60)+' мин';$('#hourValue').textContent=mins&&net!==null?money(net/(mins/60))+'/ч':'—';$('#tileCash').textContent=money(v.cash);$('#tileCashMeta').textContent=v.notes.some(x=>x.includes('касса'))?'Кассу проверить · 0 ₽ условно':state.periodMode==='shift'?'Начисления и наличные':'По календарным дням';$('#tileCommissions').textContent=money(v.fees);$('#tileRent').textContent=money(v.fullRent);$('#tileRentSplit').hidden=false;$('#tileRentBonus').textContent='Бонусами '+money(v.bonus);$('#tileRentMain').textContent=(v.expectedDays?'План деньгами ':'Деньгами ')+money(v.rentMain);$('#tileBonuses').textContent=money(v.bonus);$('#tileFuel').textContent=money(v.fuel);$('#tileOther').textContent=money(v.other);$('#tileFuelMeta').textContent=dayManual('fuel').length?'Демо · '+litresPurchased().toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' л':'Заправок не добавлено';$('#tileOtherMeta').textContent=dayManual('other').length?'Демо · '+dayManual('other').length+' записи':'Расходы не добавлены';const sh=selectedShift();$('#tileMileage').textContent=sh&&Number.isFinite(sh.mileage)?sh.mileage.toLocaleString('ru-RU')+' км':'—';$('#tileMileageMeta').textContent=sh?'Пробег смены · демо':'Выберите смену';$('#tileConsumption').textContent=Number.isFinite(state.consumptionLper100)?state.consumptionLper100.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км':'Нет данных';}
+function row(a,b,color=''){return `<div class="detail-row"><span>${a}</span><strong class="${color}">${b}</strong></div>`}
+function header(total,reason,red=false){$('#detailTitle').textContent=titles[state.screen];$('#heroCaption').textContent=state.screen==='commissions'?'Все комиссии':titles[state.screen];$('#heroTotal').textContent=total;$('#heroHelp').textContent=reason;$('#detailHero').classList.toggle('commission-hero',red);$('#heroTotal').className='hero-total'+(red?' red':'')}
+function card(rec,type){const exp=state.expanded.has(rec.id);const plus=(rec.amount>=0&&type==='cash');const c=plus?'green':rec.amount<0?'red':'';const amt=type==='cash'?signed(rec.amount):rec.amount<0?'−'+money(Math.abs(rec.amount)):money(rec.amount);return `<article class="record"><button class="record-main" data-expand="${rec.id}" aria-expanded="${exp}"><span class="record-top"><span class="record-name">${escapeHtml(rec.title)}</span><span class="record-amount ${c}">${amt}</span></span><span class="record-bottom"><span>${escapeHtml(rec.time)} · ${escapeHtml(rec.sub||'')}</span><span class="chevron">${exp?'⌃':'⌄'}</span></span></button>${exp?`<div class="record-expanded"><p>${escapeHtml(rec.desc||'Демонстрационная запись.')}</p>${rec.manual?`<div class="row-actions"><button data-edit="${rec.id}">Редактировать</button><button class="delete" data-delete="${rec.id}">Удалить</button></div>`:''}</div>`:''}</article>`}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function manualCards(type){return dayManual(type).map(r=>({id:r.id,title:r.title,time:r.time||'Вручную',amount:r.amount,sub:r.type==='fuel'&&Number.isFinite(r.litres)?'Демо · '+r.litres.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' л × '+(Number.isFinite(r.price)?r.price.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽':'цена не указана'):'Демо · '+(r.comment||'Ручная запись'),desc:`Демонстрационная запись. Дата: ${dateText(r.date)}. ${r.comment||''} В Google Sheets и Апарк не сохранялась.`,manual:true}))}
+function form(type){const name=type==='cash'?'наличный заказ':type==='fuel'?'заправку':'расход';const rec=state.manual.find(x=>x.id===state.editId);const amount=rec?rec.amount:'';const comment=rec?rec.comment:'';const amountHint={cash:'1200,00',fuel:'1271,68',other:'144,00'}[type]||'0,00';const commentHint={cash:'Например, поездка без агрегатора',fuel:'Например, АЗС',other:'Например, путевой лист'}[type]||'Необязательно';let extra='';if(type==='fuel')extra=`<div class="form-grid" style="margin-top:8px"><label class="input-label">Литры<input type="number" id="litresInput" min="0.01" step="0.01" inputmode="decimal" placeholder="19,10" value="${rec&&Number.isFinite(rec.litres)?rec.litres:''}"></label><label class="input-label">Цена за литр, ₽<input type="number" id="priceInput" min="0.01" step="0.01" inputmode="decimal" placeholder="66,58" value="${rec&&Number.isFinite(rec.price)?rec.price:''}"></label></div>`;
+const sh=selectedShift(),first=sh?.from||$('#from').value,last=sh?.to||$('#to').value;
+const entryDate=rec?.date||(sh?sh.from:last),entryTime=rec?.time||'';
+return `<div class="form-box" id="entryForm"><p class="form-title">${rec?'Редактировать':'Добавить'} ${name}</p><div class="form-grid"><label class="input-label">Сумма, ₽<input type="number" id="amountInput" min="0.01" step="0.01" inputmode="decimal" placeholder="${amountHint}" value="${amount}"></label><label class="input-label">Комментарий<input type="text" id="commentInput" maxlength="180" placeholder="${escapeHtml(commentHint)}" value="${escapeHtml(comment)}"></label></div><div class="form-grid" style="margin-top:8px"><label class="input-label">Дата операции<input type="date" id="entryDateInput" min="${first}" max="${last}" value="${entryDate}" required></label><label class="input-label">Время операции · необязательно<input type="time" id="entryTimeInput" value="${entryTime}"></label></div>${extra}<div class="form-buttons"><button class="primary-small" id="saveEntry">Сохранить</button><button class="ghost-small" id="cancelEntry">Отмена</button></div></div>`}
+function actionForm(type){return !state.openForm?`<button class="action-add" data-add="${type}">＋ ${type==='cash'?'Добавить наличный заказ':type==='fuel'?'Добавить заправку':'Добавить расход'}</button>`:form(type)}
+function renderCash(){const {d,view:v}=computed(),sh=selectedShift(),isDemo=sh&&sh.id!=='s22',cashMissing=v.notes.some(n=>n.includes('касса'));header(money(v.cash),cashMissing?'Касса не подтверждена. Отсутствие операций не означает отсутствия поездок.':isDemo?'Демонстрационная история, суммы вымышлены.':'Вымышленная касса и демонстрационные наличные.');let html=row(isDemo?'Заказы · демо':'Касса по данным',Number.isFinite(d?.cash)?money(d.cash):cashMissing?'0,00 ₽ · условно':money(v.cashMain))+row('Наличные вручную',money(v.cash-v.cashMain));html+=actionForm('cash')+'<h3 class="compact-heading">История операций</h3>';const groups=isDemo?demoShiftCashGroups[sh.id].map((g,i)=>({id:sh.id+'-group-'+i,title:'Группа заказов · демо',time:g.time,amount:g.amount,sub:'Несколько поездок · пример',desc:'Вымышленная группа. Не выгрузка из Апарка.'})):state.date==='2026-10-22'&&hasValidDay()?demoCashRecords22:[];const records=[...manualCards('cash'),...groups];html+=records.length?'<div class="records">'+records.map(r=>card(r,'cash')).join('')+'</div>':'<p class="empty">Заказов в макет не загружено.</p>';if(cashMissing)html+='<div class="warn-notice">! Требует проверки. Подтвердить отсутствие заказов можно в детализации «Чистого заработка».</div>';return html}
+function renderCommissions(){
+ const {d}=computed(),sh=selectedShift(),isDemo=sh&&sh.id!=='s22';
+ header(d?money(d.fees):'Нет данных',isDemo?'Вымышленные удержания выбранной смены.':'Вымышленные удержания по календарной дате.',true);
+ if(!d)return '<p class="empty">Для периода нет подготовленных данных.</p>';
+ let html='<div class="commission-grid">'+d.commission.map((v,i)=>'<button class="commission-card '+(state.filter===i?'selected':'')+'" data-filter="'+i+'" aria-pressed="'+(state.filter===i)+'"><span>'+commissionNames[i]+'</span><strong>−'+money(v)+'</strong></button>').join('')+'</div>';
+ html+=row('Комиссия партнёра','Нет подтверждённых списаний');
+ const history=isDemo?d.commission.map((amount,i)=>({title:commissionNames[i]+' · демо',cat:i,time:['15:30','18:20','20:15','22:10'][i],amount:-amount})):state.date==='2026-10-22'?demoFeeRecords22:[];
+ const records=history.filter(r=>state.filter<0||r.cat===state.filter);
+ html+='<h3 class="compact-heading">'+(isDemo?'Удержания · демо':'Демонстрационные удержания')+'</h3><div class="filter-line"><button data-filter="-1">Все операции</button><small>'+records.length+' записей в примере</small></div>';
+ html+=records.length?'<div class="records">'+records.map((r,i)=>card({id:'fee'+r.cat+'-'+r.time+'-'+i,title:r.title,time:r.time,sub:isDemo?'Вымышленные удержания':'Демо · удержание',amount:r.amount,desc:isDemo?'Вымышленное удержание для визуального теста.':'Вымышленная операция для проверки интерфейса.'},'fee')).join('')+'</div>':'<div class="empty">Нет операций для фильтра.</div>';return html
+}
+function renderRent(){const {view:v}=computed();header(money(v.fullRent),v.expectedDays?'Часть аренды плановая. Требует сверки с MAIN и BY_BONUS.':'Полная аренда = денежная часть MAIN + бонусное покрытие.');return row(v.expectedDays?'Аренда · факт + план':'Полная аренда',money(v.fullRent))+row(v.expectedDays?'Из MAIN · включая плановую часть':'Из MAIN · деньгами',money(v.rentMain))+row('Из BY_BONUS · бонусами',money(v.bonus),'blue')+(v.expectedDays?'<div class="warn-notice">! Требует проверки: на '+v.expectedDays+' день(дней) денежное списание не подтверждено. Временно используется полная аренда '+money(FULL_DAILY_RENT)+' за сутки минус известные бонусы, если договор аренды действовал.</div>':'<div class="info-notice">Бонусы уменьшают денежное списание, не вычитаются второй раз.</div>')}
+function renderBonuses(){const {d}=computed();header(d&&Number.isFinite(d.bonus)?money(d.bonus):'Нет данных','Показано положительной суммой: столько бонусами оплачено за аренду. Это не прибавка к чистому заработку.');$('#heroTotal').classList.add('blue');return d?row('Покрытие аренды бонусами',Number.isFinite(d.bonus)?money(d.bonus):'Нет данных','blue')+row('Прямое увеличение прибыли','0,00 ₽'):'<p class="empty">Нет демо-данных</p>'}
+function renderFuelOrOther(type){const {fuel,other}=computed();const isFuel=type==='fuel',sum=isFuel?fuel:other,records=manualCards(type);header(records.length?money(sum):'Нет записей',isFuel?'Демонстрационные заправки. Купленное топливо не равно фактическому расходу двигателя.':'Демонстрационные рабочие расходы, не связанные с Google Sheets.');let html=isFuel&&records.length?row('Куплено · демо',litresPurchased().toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' л'):'';html+=actionForm(type);html+='<h3 class="compact-heading">История записей</h3>';html+=records.length?`<div class="records">${records.map(r=>card(r,type)).join('')}</div>`:'<p class="empty">За 22 октября в текущих тестовых записях нет заправок или прочих расходов.</p>';
+if(isFuel)html+='<div class="info-notice">Попробуй добавить тестовую заправку. Появится компактная карточка, её можно раскрыть, изменить и удалить. Данные никуда не отправляются.</div>';
+return html}
+function renderEarnings(){const {view:v}=computed(),net=v.net;header(net===null?'—':money(net),v.provisional?'Условный результат по доступным данным. НЕ подтверждённый убыток или прибыль.':'Сумма по доступным данным. Демонстрационные расходы отмечены отдельно.');if(Number.isFinite(net))$('#heroTotal').classList.add(net<0?'red':'green');let html=row('Касса', '+'+money(v.cash),'green')+row('Комиссии','−'+money(v.fees),'red')+row(v.expectedDays?'Аренда из MAIN · факт + план':'Аренда из MAIN','−'+money(v.rentMain),'red')+row('Заправки · введённые','−'+money(v.fuel),'red')+row('Прочие расходы · введённые','−'+money(v.other),'red')+row('Бонусное покрытие аренды',money(v.bonus),'blue');if(v.provisional){html+='<div class="warn-notice"><div class="review-title">! Требует проверки · '+v.notes.length+' пунктов</div><ul class="review-list">'+v.notes.slice(0,9).map(n=>'<li>'+escapeHtml(n)+'</li>').join('')+'</ul>'+(v.notes.length>9?'<p>Ещё '+(v.notes.length-9)+' предупреждений. Для полного отчёта нужна синхронизация.</p>':'')+'</div>';const days=selectedCalendarDates();if(!selectedShift()&&days.length===1&&!Number.isFinite(dates[days[0]]?.cash)){const checked=!!state.cashZeroConfirmed[days[0]];html+='<button class="review-action" data-confirm-no-cash="'+days[0]+'">'+(checked?'Снять подтверждение нулевой кассы':'Подтвердить: заказов не было (0 ₽)')+'</button>'}}else html+='<div class="info-notice">Бонусы уменьшают денежную часть аренды, не добавляясь к доходу повторно.</div>';return html}
+function renderWork(){const sh=selectedShift(),mins=selectedMinutes();header(mins===null?'—':Math.floor(mins/60)+' ч '+mins%60+' мин','Рабочее время связано со сменой, час буфера не включаем.');if(!sh)return '<div class="info-notice">Для редактирования рабочего времени выберите смену.</div>';return `<div class="form-box"><p class="form-title">Рабочее время · ${dateShort(sh.to)}</p><div class="form-grid"><label class="input-label">Часы<input type="number" id="hours" min="0" max="24" inputmode="numeric" placeholder="${Math.floor(mins/60)}"></label><label class="input-label">Минуты<input type="number" id="minutes" min="0" max="59" inputmode="numeric" placeholder="${mins%60}"></label></div><div class="form-buttons"><button class="primary-small" id="saveWork">Применить</button></div></div><div class="info-notice">Изменения только в этом макете.</div>`}
+function renderSettings(){header('Демо-настройки','В этом макете нельзя изменять аккаунт, синхронизацию или боевые данные.');return '<div class="simple-settings"><button id="resetDemo">Восстановить демонстрационные цифры</button><button id="openPeriod">Изменить период</button></div><div class="info-notice">HTML работает локально: Google Apps Script и Апарк не вызываются.</div>'}
+function renderSync(){header('Не подключена','Фоновая синхронизация здесь только представлена визуально.');return '<div class="warn-notice">В прототипе нет API-запросов, фоновых таймеров и авторизации. Реальную синхронизацию нужно отдельно проверять в TaxiCheck.</div>'+row('Апарк · MAIN','Демо-данные')+row('Апарк · BY_BONUS','Демо-данные')+row('Gmail','Не подключена')}
+function renderOther(){if(state.screen==='mileage'){const sh=selectedShift(),m=sh&&Number.isFinite(sh.mileage)?sh.mileage:null;header(m===null?'—':m.toLocaleString('ru-RU')+' км',sh?'Демонстрационный пробег выбранной смены.':'Произвольный интервал не имеет вычисляемого пробега.');return sh?row('Пробег смены',m===null?'—':m+' км')+'<div class="info-notice">Для редактирования пробега и прикрепления фото одометра открой «Параметры смены» на главной.</div>':'<div class="info-notice">Для отображения пробега выберите смену в ленте под панелью периода.</div>'}const v=Number.isFinite(state.consumptionLper100)?state.consumptionLper100:null;header(v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км','Накопительный расход по всем сменам, не зависит от периода (демо).');return row('Накопительный расход',v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км')+'<div class="info-notice">Демонстрационное значение. Для точного расчёта нужны подтверждённый пробег и фактически израсходованное топливо.</div>'}
+function renderDetail(){const name=state.screen;const content=name==='cash'?renderCash():name==='commissions'?renderCommissions():name==='rent'?renderRent():name==='bonuses'?renderBonuses():name==='fuel'||name==='other'?renderFuelOrOther(name):name==='earnings'?renderEarnings():name==='work'?renderWork():name==='settings'?renderSettings():name==='sync'?renderSync():renderOther();$('#detailContent').innerHTML=content}
+function render(){const home=state.screen==='home';$('#home').hidden=!home;$('#detail').hidden=home;$('#refreshBtn').hidden=!home;$('#syncStatus').hidden=!home;$('#homeBrand').hidden=!home;$('#backHome').hidden=home;$('#detailTitle').hidden=home;$('#gear').hidden=!home;$('#appHeader').classList.toggle('detail-nav',!home);syncRibbon();renderHome();if(!home)renderDetail();}
+function openScreen(s){state.screen=s;state.filter=-1;state.openForm=false;state.editId=null;state.expanded.clear();render();window.scrollTo(0,0)}
+function markPeriodDirty(){$('#globalNotice').textContent='Период изменён. Нажмите «Показать». ';}
+function applyPeriod(){const from=$('#from').value,to=$('#to').value,tf=$('#timeFrom').value||'00:00',tt=$('#timeTo').value||'23:59';if(!from||!to||from+'T'+tf>=to+'T'+tt){toast('Проверь даты и время периода');return}if(state.periodMode==='custom'&&requestedCalendarDays()>MAX_PERIOD_DAYS){$('#globalNotice').textContent='Период превышает 62 календарных дня. Расчёт не выполнен. Выбери меньший диапазон.';renderHome();toast('Максимум 62 календарных дня');return}state.date=from;if(state.periodMode==='custom')saveCustomPeriodDraft();state.periodDirty=false;state.filter=-1;state.expanded.clear();const sh=selectedShift();$('#globalNotice').textContent=sh?sh.id==='s22'?'ДЕМО 22.10: все финансовые суммы, начисления и траты вымышлены.':'СМЕНА '+dateShort(sh.from)+' · ДЕМО: касса, комиссии, аренда, бонусы, бензин и траты вымышлены.':dayData()?'СВОЙ ПЕРИОД: пробег скрыт. Данные только за полный календарный день.':'СВОЙ ПЕРИОД: пробег скрыт. Почасовая финансовая история не загружена.';syncRibbon();updateDateLabels();openScreen('home')}
+function saveEntry(){const a=Number($('#amountInput')?.value);if(!Number.isFinite(a)||a<=0||a>1e7){toast('Укажи положительную сумму');return}const sh=selectedShift(),entryDate=$('#entryDateInput')?.value,entryTime=$('#entryTimeInput')?.value||'',first=sh?.from||$('#from').value,last=sh?.to||$('#to').value;if(!entryDate||entryDate<first||entryDate>last){toast('Дата операции должна входить в выбранный период');return}const type=state.screen,comment=($('#commentInput')?.value||'').trim();const litres=type==='fuel'?Number($('#litresInput')?.value):null,price=type==='fuel'?Number($('#priceInput')?.value):null;const fuelFields=type==='fuel'&&Number.isFinite(litres)&&litres>0&&Number.isFinite(price)&&price>0?{litres,price}:{};if(state.editId){const r=state.manual.find(x=>x.id===state.editId);if(r){r.amount=+a.toFixed(2);r.comment=comment;r.title=comment||r.title;r.date=entryDate;r.time=entryTime;r.shiftId=sh?.id||null;Object.assign(r,fuelFields)}}else{const title=comment||({cash:'Наличный заказ',fuel:'Заправка',other:'Прочий расход'}[type]);state.manual.unshift({id:'m'+Date.now()+Math.random().toString(36).slice(2),shiftId:sh?.id||null,date:entryDate,time:entryTime,type,amount:+a.toFixed(2),comment,title,...fuelFields})}state.openForm=false;state.editId=null;state.expanded.clear();render();toast('Сохранено только в прототипе')}
+function onDetailClick(e){const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-expand')){const id=b.dataset.expand;state.expanded.has(id)?state.expanded.delete(id):state.expanded.add(id);renderDetail();return}if(b.hasAttribute('data-filter')){state.filter=Number(b.dataset.filter);state.expanded.clear();renderDetail();return}if(b.hasAttribute('data-add')){state.openForm=true;state.editId=null;renderDetail();return}if(b.hasAttribute('data-edit')){state.editId=b.dataset.edit;state.openForm=true;renderDetail();return}if(b.hasAttribute('data-delete')){const id=b.dataset.delete;if(confirm('Удалить пробную запись?')){state.manual=state.manual.filter(x=>x.id!==id);state.expanded.delete(id);render();toast('Пробная запись удалена')}return}if(b.hasAttribute('data-confirm-no-cash')){const date=b.dataset.confirmNoCash;state.cashZeroConfirmed[date]=!state.cashZeroConfirmed[date];render();toast(state.cashZeroConfirmed[date]?'Нулевая касса подтверждена в макете':'Подтверждение кассы снято');return}if(b.id==='cancelEntry'){state.openForm=false;state.editId=null;renderDetail();return}if(b.id==='saveEntry'){saveEntry();return}if(b.id==='saveWork'){const base=selectedMinutes()??0,h=$('#hours').value.trim()===''?Math.floor(base/60):Number($('#hours').value),m=$('#minutes').value.trim()===''?base%60:Number($('#minutes').value);if(!Number.isInteger(h)||!Number.isInteger(m)||h<0||h>24||m<0||m>59){toast('Проверь часы и минуты');return}const sh=selectedShift();if(!sh){toast('Выбери смену');return}sh.workMinutes=h*60+m;state.workMinutes=demoShifts[4].workMinutes;render();toast('Время смены обновлено в макете');return}if(b.id==='resetDemo'){restoreDemoDefaults();window.scrollTo(0,0);toast('Все демо-значения восстановлены');return}if(b.id==='openPeriod'){openScreen('home');showCustomPeriod();return}}
+$('#modeShifts').addEventListener('click',showShiftPeriod);$('#modeCustom').addEventListener('click',showCustomPeriod);
+$('#shiftRibbon').addEventListener('click',e=>{const b=e.target.closest('[data-shift-id]');if(b)chooseShift(b.dataset.shiftId)});
+$('#shiftEditToggle').addEventListener('click',()=>{if(!selectedShift())return;const p=$('#shiftEditContent');if(p.hidden){fillShiftForm();p.hidden=false;$('#shiftEditToggle').setAttribute('aria-expanded','true')}else closeShiftEditor()});
+$('#shiftEditSave').addEventListener('click',saveShiftEditor);
+$('#shiftEditCancel').addEventListener('click',closeShiftEditor);
+for(const id of ['shiftFromDate','shiftToDate','shiftFromTime','shiftToTime']){for(const ev of ['input','change'])$('#'+id).addEventListener(ev,updateShiftInputLabels)}
+for(const id of ['photoBefore','photoAfter']){$('#'+id).addEventListener('change',e=>{const chosen=e.target.files?.[0];if(!chosen)return;if(chosen.size>15*1024*1024){toast('Файл слишком большой для макета · до 15 МБ');e.target.value='';return}if(!chosen.type.startsWith('image/')){toast('Нужна фотография');e.target.value='';return}const old=state.pendingFiles?.[id],sh=selectedShift();if(!sh||!state.pendingFiles)return;if(old?.url&&old!==sh.files?.[id])URL.revokeObjectURL(old.url);state.pendingFiles[id]={name:chosen.name,type:chosen.type,url:URL.createObjectURL(chosen)};updateFilePreview(id)});$('#'+id+'Clear').addEventListener('click',()=>{const sh=selectedShift(),own=state.pendingFiles?.[id];if(!sh||!state.pendingFiles)return;if(own?.url&&own!==sh.files?.[id])URL.revokeObjectURL(own.url);delete state.pendingFiles[id];$('#'+id).value='';updateFilePreview(id)})}
+$('#waybillFiles').addEventListener('change',e=>{const sh=selectedShift();if(!sh||!state.pendingFiles)return;const existing=state.pendingFiles.waybillFiles||[];const choices=Array.from(e.target.files||[]);if(existing.length+choices.length>2){toast('К одной смене можно прикрепить максимум 2 путевых');e.target.value='';return}const next=[...existing];for(const file of choices){if(file.size>15*1024*1024){toast('Максимум 15 МБ на один файл');continue}if(!file.type.startsWith('image/')&&file.type!=='application/pdf'){toast('Нужны фото или PDF');continue}next.push({name:file.name,type:file.type,url:URL.createObjectURL(file)})}state.pendingFiles.waybillFiles=next;e.target.value='';updateWaybillList()});
+$('#waybillFilesList').addEventListener('click',e=>{const b=e.target.closest('[data-waybill-remove]');if(!b||!state.pendingFiles)return;const index=Number(b.dataset.waybillRemove),files=state.pendingFiles.waybillFiles||[],removed=files[index],sh=selectedShift();if(!removed)return;state.pendingFiles.waybillFiles=files.filter((_,i)=>i!==index);if(removed.url&&!Object.values(sh?.files||{}).flat().includes(removed))URL.revokeObjectURL(removed.url);updateWaybillList()});
+for(const id of ['from','to','timeFrom','timeTo']){for(const ev of ['input','change'])$('#'+id).addEventListener(ev,()=>{if(state.periodMode!=='custom'){closeShiftEditor();state.periodMode='custom';state.selectedShiftId=null;syncRibbon();renderHome()}updateDateLabels();markPeriodDirty()})}
+$('#periodShow').addEventListener('click',applyPeriod);
+document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>openScreen(b.dataset.screen)));
+$('#netCard').addEventListener('click',e=>{if(!e.target.closest('#workButton')&&!e.target.closest('#netAlert'))openScreen('earnings')});$('#netCard').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target===$('#netCard'))openScreen('earnings')});$('#workButton').addEventListener('click',e=>{e.stopPropagation();openScreen('work')});$('#netAlert').addEventListener('click',e=>{e.stopPropagation();openScreen('earnings')});
+$('#gear').addEventListener('click',()=>openScreen('settings'));$('#backHome').addEventListener('click',()=>openScreen('home'));
+$('#detailContent').addEventListener('click',onDetailClick);
+$('#refreshBtn').addEventListener('click',demoRefresh);
+$('#syncStatus').addEventListener('click',()=>openScreen('sync'));
+renderShiftRibbon();updateDateLabels();render();
+})();
+</script>
+</body></html>
