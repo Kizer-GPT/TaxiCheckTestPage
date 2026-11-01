@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - index.html
+      - tests/browser/taxicheck_github_pages_smoke.py
+      - .github/workflows/taxicheck-pages-playwright.yml
   workflow_dispatch:
 
 permissions:
