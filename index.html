@@ -267,20 +267,20 @@ body{
    <button type="button" id="modeCustom" class="period-mode-tab" aria-pressed="false">Свой период</button>
   </div>
   <div id="shiftModePanel">
-   <div class="period-line"><span class="period-label" id="periodLine">Смена · 22.10 00:00 → 22.10 23:59</span></div>
+   <div class="period-line"><span class="period-label" id="periodLine">Смена · 22.10 14:00 → 23.10 02:00</span></div>
    <div class="shift-ribbon" id="shiftRibbon" role="group" aria-label="Сохранённые смены: старые слева, текущая справа"></div>
    <p class="shift-ribbon-note" id="shiftRibbonNote">Листайте смены влево · демо</p>
    <div class="panel shift-editor-panel" id="shiftEditorPanel">
-    <button class="shift-editor-toggle" id="shiftEditToggle" aria-expanded="false"><span>Параметры смены</span><small id="shiftEditSummary">22.10 · 00:00–23:59 ▾</small></button>
+    <button class="shift-editor-toggle" id="shiftEditToggle" aria-expanded="false"><span>Параметры смены</span><small id="shiftEditSummary">22.10 14:00 → 23.10 02:00 ▾</small></button>
     <div class="shift-editor-content" id="shiftEditContent" hidden>
      <p class="shift-edit-caption">Границы и данные выбранной смены · демонстрация</p>
      <div class="shift-edit-row">
       <div class="field-wrap"><span class="field-caption">Начало · дата</span><label class="fake-native"><span class="native-value" id="shiftFromDateText">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="shiftFromDate" aria-label="Дата начала смены"></label></div>
-      <div class="field-wrap"><span class="field-caption">Время</span><label class="fake-native"><span class="native-value" id="shiftFromTimeText">00:00</span><span class="native-symbol">◷</span><input type="time" id="shiftFromTime" aria-label="Время начала смены"></label></div>
+      <div class="field-wrap"><span class="field-caption">Время</span><label class="fake-native"><span class="native-value" id="shiftFromTimeText">14:00</span><span class="native-symbol">◷</span><input type="time" id="shiftFromTime" aria-label="Время начала смены"></label></div>
      </div>
      <div class="shift-edit-row">
-      <div class="field-wrap"><span class="field-caption">Конец · дата</span><label class="fake-native"><span class="native-value" id="shiftToDateText">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="shiftToDate" aria-label="Дата завершения смены"></label></div>
-      <div class="field-wrap"><span class="field-caption">Время</span><label class="fake-native"><span class="native-value" id="shiftToTimeText">23:59</span><span class="native-symbol">◷</span><input type="time" id="shiftToTime" aria-label="Время завершения смены"></label></div>
+      <div class="field-wrap"><span class="field-caption">Конец · дата</span><label class="fake-native"><span class="native-value" id="shiftToDateText">23.10.2026</span><span class="native-symbol">▦</span><input type="date" id="shiftToDate" aria-label="Дата завершения смены"></label></div>
+      <div class="field-wrap"><span class="field-caption">Время</span><label class="fake-native"><span class="native-value" id="shiftToTimeText">02:00</span><span class="native-symbol">◷</span><input type="time" id="shiftToTime" aria-label="Время завершения смены"></label></div>
      </div>
      <label class="shift-edit-label" style="margin-top:11px">Пробег за смену, км<input type="number" min="0" max="2500" step="1" inputmode="numeric" class="shift-edit-input" id="shiftMileage" placeholder="Например, 208"></label>
      <p class="period-help" id="shiftEditHint" aria-live="polite"></p>
@@ -300,11 +300,11 @@ body{
     <p class="period-editor-title">Выбранный период</p>
     <div class="period-group">
      <div class="field-wrap"><span class="field-caption">С даты</span><label class="fake-native"><span id="fromText" class="native-value">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="from" min="2026-10-14" value="2026-10-22" aria-label="Дата начала"></label></div>
-     <div class="field-wrap"><span class="field-caption">Со времени</span><label class="fake-native"><span id="timeFromText" class="native-value">00:00</span><span class="native-symbol">◷</span><input type="time" id="timeFrom" aria-label="Время начала"></label></div>
+     <div class="field-wrap"><span class="field-caption">Со времени</span><label class="fake-native"><span id="timeFromText" class="native-value">14:00</span><span class="native-symbol">◷</span><input type="time" id="timeFrom" value="14:00" aria-label="Время начала"></label></div>
     </div>
     <div class="period-group">
-     <div class="field-wrap"><span class="field-caption">По дату</span><label class="fake-native"><span id="toText" class="native-value">22.10.2026</span><span class="native-symbol">▦</span><input type="date" id="to" min="2026-10-14" value="2026-10-22" aria-label="Дата окончания"></label></div>
-     <div class="field-wrap"><span class="field-caption">До времени</span><label class="fake-native"><span id="timeToText" class="native-value">23:59</span><span class="native-symbol">◷</span><input type="time" id="timeTo" aria-label="Время окончания"></label></div>
+     <div class="field-wrap"><span class="field-caption">По дату</span><label class="fake-native"><span id="toText" class="native-value">23.10.2026</span><span class="native-symbol">▦</span><input type="date" id="to" min="2026-10-14" value="2026-10-23" aria-label="Дата окончания"></label></div>
+     <div class="field-wrap"><span class="field-caption">До времени</span><label class="fake-native"><span id="timeToText" class="native-value">02:00</span><span class="native-symbol">◷</span><input type="time" id="timeTo" value="02:00" aria-label="Время окончания"></label></div>
     </div>
     <button class="period-submit" id="periodShow">Показать</button>
     <p class="period-help">Москва · изменение дат или времени переводит в «Свой период». Временные границы смен редактируются на главном экране. История операций по часам в макете отсутствует.</p>
@@ -372,7 +372,7 @@ const titles={cash:'Касса',commissions:'Комиссии',rent:'Аренд�
 const demoCashRecords22=[
  {id:'fake-cash-1',type:'cash',title:'Группа заказов · демо',time:'23:49',amount:4812.30,sub:'Вымышленные поездки',desc:'Полностью вымышленная группа заказов. Не выгрузка из Апарка.'},
  {id:'fake-cash-2',type:'cash',title:'Группа заказов · демо',time:'17:10',amount:4907.60,sub:'Вымышленные поездки',desc:'Полностью вымышленная группа заказов. Не выгрузка из Апарка.'},
- {id:'fake-cash-3',type:'cash',title:'Группа заказов · демо',time:'11:18',amount:4517.90,sub:'Вымышленные поездки',desc:'Полностью вымышленная группа заказов. Не выгрузка из Апарка.'}
+ {id:'fake-cash-3',type:'cash',title:'Группа заказов · демо',time:'23.10 · 01:18',amount:4517.90,sub:'Вымышленные поездки',desc:'Полностью вымышленная группа заказов. Не выгрузка из Апарка.'}
 ];
 const demoFeeRecords22=[
  {title:'Комиссия за заказы',cat:0,time:'23:47',amount:-610.10},
@@ -381,16 +381,16 @@ const demoFeeRecords22=[
  {title:'Комиссия за заказы',cat:0,time:'17:09',amount:-598.35},
  {title:'Точка Б / Гибкий',cat:3,time:'17:09',amount:-144.80},
  {title:'НДС',cat:1,time:'17:09',amount:-132.10},
- {title:'Комиссия за заказы',cat:0,time:'11:17',amount:-605.75},
- {title:'Мой район / По делам',cat:2,time:'11:17',amount:-150.00},
- {title:'НДС',cat:1,time:'11:17',amount:-132.35}
+ {title:'Комиссия за заказы',cat:0,time:'23.10 · 01:17',amount:-605.75},
+ {title:'Мой район / По делам',cat:2,time:'23.10 · 01:17',amount:-150.00},
+ {title:'НДС',cat:1,time:'23.10 · 01:17',amount:-132.35}
 ];
 // Display-only example records. Not from Apark or any connected Google Sheet.
 const exampleRecords=[
  {id:'demo-cash-1',date:'2026-10-22',type:'cash',title:'Наличный заказ № 1 · демо',time:'18:05',amount:1000,comment:'Заказ без агрегатора · демо'},
- {id:'demo-cash-2',date:'2026-10-22',type:'cash',title:'Наличный заказ № 2 · демо',time:'20:40',amount:750,comment:'Самостоятельный заказ · демо'},
+ {id:'demo-cash-2',date:'2026-10-23',type:'cash',title:'Наличный заказ № 2 · демо',time:'01:20',amount:750,comment:'Самостоятельный заказ · демо'},
  {id:'demo-fuel-1',date:'2026-10-22',type:'fuel',title:'Заправка · демо',time:'16:30',amount:2396.25,litres:35.50,price:67.50,comment:'АЗС · вымышленная покупка'},
- {id:'demo-other-1',date:'2026-10-22',type:'other',title:'Путевой лист · демо',time:'09:10',amount:125,comment:'Документы · демо'},
+ {id:'demo-other-1',date:'2026-10-22',type:'other',title:'Путевой лист · демо',time:'14:10',amount:125,comment:'Документы · демо'},
  {id:'demo-other-2',date:'2026-10-22',type:'other',title:'Прочий расход · демо',time:'14:15',amount:115,comment:'Дополнительный расход · демо'}
 ];
 const extraDemoRecords=[
@@ -413,7 +413,7 @@ exampleRecords.forEach(r=>r.shiftId='s22');
 exampleRecords.push(...extraDemoRecords);
 // Демонстрационная лента. Даты и пробеги не являются подтверждёнными сменами.
 function plusMinutes(date,time,delta){const x=new Date(date+'T'+time+':00Z');x.setUTCMinutes(x.getUTCMinutes()+delta);return {date:x.toISOString().slice(0,10),time:x.toISOString().slice(11,16)}}
-const demoShifts=[{id:'s18',from:'2026-10-18',start:'00:00',to:'2026-10-18',end:'23:00',mileage:176,workMinutes:720,files:{}},{id:'s19',from:'2026-10-19',start:'00:00',to:'2026-10-19',end:'23:00',mileage:246,workMinutes:735,files:{}},{id:'s20',from:'2026-10-20',start:'00:00',to:'2026-10-20',end:'23:00',mileage:193,workMinutes:660,files:{}},{id:'s21',from:'2026-10-21',start:'00:00',to:'2026-10-21',end:'23:00',mileage:222,workMinutes:760,files:{}},{id:'s22',from:'2026-10-22',start:'00:00',to:'2026-10-22',end:'23:59',mileage:216,workMinutes:705,files:{}}];
+const demoShifts=[{id:'s18',from:'2026-10-18',start:'00:00',to:'2026-10-18',end:'23:00',mileage:176,workMinutes:720,files:{}},{id:'s19',from:'2026-10-19',start:'00:00',to:'2026-10-19',end:'23:00',mileage:246,workMinutes:735,files:{}},{id:'s20',from:'2026-10-20',start:'10:00',to:'2026-10-20',end:'22:00',mileage:193,workMinutes:660,files:{}},{id:'s21',from:'2026-10-21',start:'23:00',to:'2026-10-22',end:'13:00',mileage:222,workMinutes:760,files:{}},{id:'s22',from:'2026-10-22',start:'14:00',to:'2026-10-23',end:'02:00',mileage:216,workMinutes:705,files:{}}];
 const defaultDemoShifts=demoShifts.map(s=>({...s,files:{}}));
 const state={screen:'home',date:'2026-10-22',periodMode:'shift',selectedShiftId:'s22',lastShiftId:'s22',customPeriod:null,periodDirty:false,filter:-1,manual:exampleRecords.map(r=>({...r})),expanded:new Set(),openForm:false,editId:null,fuelDemo:false,workMinutes:705,mileageKm:216,consumptionLper100:9.2,pendingFiles:null,refreshing:false,cashZeroConfirmed:{}};
 function selectedShift(){return state.periodMode==='shift'?demoShifts.find(x=>x.id===state.selectedShiftId)||null:null}
@@ -452,7 +452,7 @@ function shiftEditPreview(){
  $('#shiftEditHint').textContent=parts.length?parts.join(' · ')+'. Часовой буфер сохраняется.':'Границы первой и единственной смены можно изменить.';
 }
 function shiftChipDates(sh){const crosses=sh.from!==sh.to;return {start:dateShort(sh.from),end:crosses?'→ '+dateShort(sh.to):'',crosses}}
-function syncRibbon(){const selected=selectedShift();for(const b of $('#shiftRibbon').querySelectorAll('[data-shift-id]')){const sh=demoShifts.find(x=>x.id===b.dataset.shiftId),yes=!!selected&&b.dataset.shiftId===selected.id;b.classList.toggle('selected',yes);b.setAttribute('aria-pressed',String(yes));if(sh){const dates=shiftChipDates(sh);b.classList.toggle('cross-day',dates.crosses);b.querySelector('.shift-chip-date-start').textContent=dates.start;b.querySelector('.shift-chip-date-end').textContent=dates.end;b.setAttribute('aria-label',(sh.id==='s22'?'Текущая смена':'Смена')+': '+dateText(sh.from)+' '+sh.start+' — '+dateText(sh.to)+' '+sh.end)}}$('#shiftRibbonNote').textContent=selected?'Смены · демо. Старые слева, текущая справа':'Свой период · для пробега выберите смену';$('#shiftModePanel').hidden=state.periodMode!=='shift';$('#customModePanel').hidden=state.periodMode!=='custom';for(const [id,on] of [['modeShifts',state.periodMode==='shift'],['modeCustom',state.periodMode==='custom']]){const b=$('#'+id);b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}$('#shiftEditorPanel').hidden=!selected||state.screen!=='home';if(selected)$('#shiftEditSummary').textContent=dateShort(selected.to)+' · '+selected.start+'–'+selected.end+' ▾';else closeShiftEditor()}
+function syncRibbon(){const selected=selectedShift();for(const b of $('#shiftRibbon').querySelectorAll('[data-shift-id]')){const sh=demoShifts.find(x=>x.id===b.dataset.shiftId),yes=!!selected&&b.dataset.shiftId===selected.id;b.classList.toggle('selected',yes);b.setAttribute('aria-pressed',String(yes));if(sh){const dates=shiftChipDates(sh);b.classList.toggle('cross-day',dates.crosses);b.querySelector('.shift-chip-date-start').textContent=dates.start;b.querySelector('.shift-chip-date-end').textContent=dates.end;b.setAttribute('aria-label',(sh.id==='s22'?'Текущая смена':'Смена')+': '+dateText(sh.from)+' '+sh.start+' — '+dateText(sh.to)+' '+sh.end)}}$('#shiftRibbonNote').textContent=selected?'Смены · демо. Старые слева, текущая справа':'Свой период · для пробега выберите смену';$('#shiftModePanel').hidden=state.periodMode!=='shift';$('#customModePanel').hidden=state.periodMode!=='custom';for(const [id,on] of [['modeShifts',state.periodMode==='shift'],['modeCustom',state.periodMode==='custom']]){const b=$('#'+id);b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}$('#shiftEditorPanel').hidden=!selected||state.screen!=='home';if(selected)$('#shiftEditSummary').textContent=dateShort(selected.from)+' '+selected.start+' → '+dateShort(selected.to)+' '+selected.end+' ▾';else closeShiftEditor()}
 function renderShiftRibbon(){const r=$('#shiftRibbon');r.innerHTML=demoShifts.map(sh=>'<button type="button" class="shift-chip" data-shift-id="'+sh.id+'" aria-pressed="false"><span class="shift-chip-dates"><strong class="shift-chip-date-start"></strong><span class="shift-chip-date-end"></span></span><span class="shift-chip-kind">'+(sh.id==='s22'?'Текущая · демо':'Смена · демо')+'</span></button>').join('');syncRibbon();r.scrollLeft=r.scrollWidth}
 function fillShiftForm(){const sh=selectedShift();if(!sh)return;for(const [id,value] of [['shiftFromDate',sh.from],['shiftFromTime',sh.start],['shiftToDate',sh.to],['shiftToTime',sh.end]])$('#'+id).value=value;$('#shiftMileage').value=Number.isFinite(sh.mileage)?String(sh.mileage):'';updateShiftInputLabels();state.pendingFiles={...sh.files};for(const type of ['photoBefore','photoAfter']){const input=$('#'+type);input.value='';updateFilePreview(type)}$('#waybillFiles').value='';updateWaybillList()}
 function updateShiftInputLabels(){for(const [id,out] of [['shiftFromDate','shiftFromDateText'],['shiftToDate','shiftToDateText']])$('#'+out).textContent=dateText($('#'+id).value);for(const [id,out] of [['shiftFromTime','shiftFromTimeText'],['shiftToTime','shiftToTimeText']])$('#'+out).textContent=$('#'+id).value||'—';shiftEditPreview()}
@@ -569,7 +569,7 @@ function row(a,b,color=''){return `<div class="detail-row"><span>${a}</span><str
 function header(total,reason,red=false){$('#detailTitle').textContent=titles[state.screen];$('#heroCaption').textContent=state.screen==='commissions'?'Все комиссии':titles[state.screen];$('#heroTotal').textContent=total;$('#heroHelp').textContent=reason;$('#detailHero').classList.toggle('commission-hero',red);$('#heroTotal').className='hero-total'+(red?' red':'')}
 function card(rec,type){const exp=state.expanded.has(rec.id);const plus=(rec.amount>=0&&type==='cash');const c=plus?'green':rec.amount<0?'red':'';const amt=type==='cash'?signed(rec.amount):rec.amount<0?'−'+money(Math.abs(rec.amount)):money(rec.amount);return `<article class="record"><button class="record-main" data-expand="${rec.id}" aria-expanded="${exp}"><span class="record-top"><span class="record-name">${escapeHtml(rec.title)}</span><span class="record-amount ${c}">${amt}</span></span><span class="record-bottom"><span>${escapeHtml(rec.time)} · ${escapeHtml(rec.sub||'')}</span><span class="chevron">${exp?'⌃':'⌄'}</span></span></button>${exp?`<div class="record-expanded"><p>${escapeHtml(rec.desc||'Демонстрационная запись.')}</p>${rec.manual?`<div class="row-actions"><button data-edit="${rec.id}">Редактировать</button><button class="delete" data-delete="${rec.id}">Удалить</button></div>`:''}</div>`:''}</article>`}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function manualCards(type){return dayManual(type).map(r=>({id:r.id,title:r.title,time:r.time||'Вручную',amount:r.amount,sub:r.type==='fuel'&&Number.isFinite(r.litres)?'Демо · '+r.litres.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' л × '+(Number.isFinite(r.price)?r.price.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽':'цена не указана'):'Демо · '+(r.comment||'Ручная запись'),desc:`Демонстрационная запись. Дата: ${dateText(r.date)}. ${r.comment||''} В Google Sheets и Апарк не сохранялась.`,manual:true}))}
+function manualCards(type){const sh=selectedShift();return dayManual(type).map(r=>({id:r.id,title:r.title,time:sh&&sh.from!==sh.to?dateShort(r.date)+' · '+(r.time||'Вручную'):r.time||'Вручную',amount:r.amount,sub:r.type==='fuel'&&Number.isFinite(r.litres)?'Демо · '+r.litres.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' л × '+(Number.isFinite(r.price)?r.price.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽':'цена не указана'):'Демо · '+(r.comment||'Ручная запись'),desc:`Демонстрационная запись. Дата: ${dateText(r.date)}. ${r.comment||''} В Google Sheets и Апарк не сохранялась.`,manual:true}))}
 function form(type){const name=type==='cash'?'наличный заказ':type==='fuel'?'заправку':'расход';const rec=state.manual.find(x=>x.id===state.editId);const amount=rec?rec.amount:'';const comment=rec?rec.comment:'';const amountHint={cash:'1200,00',fuel:'1271,68',other:'144,00'}[type]||'0,00';const commentHint={cash:'Например, поездка без агрегатора',fuel:'Например, АЗС',other:'Например, путевой лист'}[type]||'Необязательно';let extra='';if(type==='fuel')extra=`<div class="form-grid" style="margin-top:8px"><label class="input-label">Литры<input type="number" id="litresInput" min="0.01" step="0.01" inputmode="decimal" placeholder="19,10" value="${rec&&Number.isFinite(rec.litres)?rec.litres:''}"></label><label class="input-label">Цена за литр, ₽<input type="number" id="priceInput" min="0.01" step="0.01" inputmode="decimal" placeholder="66,58" value="${rec&&Number.isFinite(rec.price)?rec.price:''}"></label></div>`;
 const sh=selectedShift(),first=sh?.from||$('#from').value,last=sh?.to||$('#to').value;
 const entryDate=rec?.date||(sh?sh.from:last),entryTime=rec?.time||'';
