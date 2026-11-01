@@ -234,6 +234,17 @@ def run_case(browser, width, height):
         require("вымышлены" in page.locator("#globalNotice").inner_text().lower(),
                 "Missing synthetic-data notice")
         no_overflow(page, "home")
+        logo = page.locator("#homeBrand .brand-lockup")
+        require(logo.is_visible(), "TaxiCheck wordmark missing")
+        require(logo.locator(".brand-taxi").inner_text() == "Taxi", "Taxi wordmark wrong")
+        require(logo.locator(".brand-check").inner_text() == "Check", "Check wordmark wrong")
+        car = logo.locator(".brand-car")
+        require(car.count() == 1, "Yellow taxi icon not present")
+        require(car.evaluate("(img) => img.complete && img.naturalWidth > 0"),
+                "Yellow taxi icon failed to load/decode")
+        require(car.evaluate("(img) => img.getBoundingClientRect().height <= 42"),
+                "Taxi icon too large for compact mobile header")
+        no_overflow(page, "new TaxiCheck header")
         require(
             page.locator('#shiftRibbon [data-shift-id="s22"]').get_attribute("aria-pressed") == "true",
             "22 October night shift must be selected by default",
