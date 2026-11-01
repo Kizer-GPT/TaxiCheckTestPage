@@ -135,6 +135,34 @@ def test_qa_persistence(page):
     boxes.first.check()
     require(page.locator("#qaCount").inner_text().startswith("1 /"),
             "QA progress not counted")
+    info = page.locator(".qa-device")
+    require(info.count() == 1, "Device metadata panel is missing")
+    require(info.locator("dd").count() == 6, "Missing OS/browser/screen/date data")
+    require("Браузер" in info.inner_text(), "Browser metadata missing")
+    require("Система" in info.inner_text(), "OS metadata missing")
+    require("Экран" in info.inner_text(), "Screen metadata missing")
+    page.locator("#qaModelInput").fill("Синтетический тестовый смартфон")
+    # Capture report text without touching the real OS clipboard.
+    page.evaluate("""() => {
+      window.__qaCaptured = null;
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {writeText: text => {
+          window.__qaCaptured = text;
+          return Promise.resolve();
+        }}
+      });
+      window.prompt = (_, text) => { window.__qaCaptured = text; return null; };
+    }""")
+    page.locator("#qaCopy").click()
+    page.wait_for_function("window.__qaCaptured !== null")
+    report = page.evaluate("window.__qaCaptured")
+    for phrase in ("Модель (вручную): Синтетический тестовый смартфон",
+                   "Устройство:", "Система:", "Браузер:",
+                   "Область браузера:", "Экран:", "Дата проверки:", "[x] "):
+        require(phrase in report, f"Copied QA report missing {phrase}")
+    require("\\n" not in report,
+            "Copied report includes escaped backslash-n instead of newlines")
     no_overflow(page, "QA checklist")
 
     page.reload(wait_until="domcontentloaded")
@@ -144,6 +172,8 @@ def test_qa_persistence(page):
             "QA checklist did not survive browser reload")
     require(page.locator("#qaCount").inner_text().startswith("1 /"),
             "QA progress did not survive reload")
+    require(page.locator("#qaModelInput").input_value() == "Синтетический тестовый смартфон",
+            "Manually provided device model did not survive reload")
 
     # Resetting the DEMONSTRATION must not reset the QA checklist.
     page.locator("#resetDemo").click()
@@ -151,6 +181,8 @@ def test_qa_persistence(page):
     page.locator("#qaDetails summary").click()
     require(page.locator('input[data-qa-id]').first.is_checked(),
             "Demo reset unexpectedly cleared QA checklist")
+    require(page.locator("#qaModelInput").input_value() == "Синтетический тестовый смартфон",
+            "Demo reset unexpectedly cleared device model")
 
     page.once("dialog", lambda dialog: dialog.accept())
     page.locator("#qaReset").click()
