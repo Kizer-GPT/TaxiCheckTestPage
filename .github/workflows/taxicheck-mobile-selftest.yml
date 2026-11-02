@@ -1,0 +1,39 @@
+name: TaxiCheck mobile self-test (mockup PR)
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'qa/mobile-selftest.js'
+      - 'tests/browser/taxicheck_mobile_selftest.py'
+      - '.github/workflows/taxicheck-mobile-selftest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-mockup-selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout without token persistence
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax check
+        run: node --check qa/mobile-selftest.js
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Playwright (Chromium and WebKit)
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.64.1
+          python -m playwright install --with-deps chromium webkit
+      - name: Test iPhone and Android-style viewports using LOCAL mockup only
+        run: python tests/browser/taxicheck_mobile_selftest.py
