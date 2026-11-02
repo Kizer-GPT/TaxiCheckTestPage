@@ -1,0 +1,817 @@
+<!doctype html>
+<!-- Public static visual demo: entirely fictitious data. No API calls, tokens, financial accounts or Google dependencies. -->
+<html lang="ru">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b121e">
+<title>TaxiCheck · новый интерфейс · демо</title>
+<style>
+/* Public design preview; no real financial data or network requests. */
+:root{color-scheme:dark;--bg:#0b121e;--panel:#151f2d;--tile:#162333;--border:#334257;--txt:#edf4fb;--muted:#98acc3;--green:#6be1ae;--red:#ff9ba7;--blue:#70b0ff;--gold:#f2c58b;--field:#1d2d41}
+*,*:before,*:after{box-sizing:border-box}
+html{scroll-behavior:auto;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:disabled{opacity:.55;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.app{max-width:900px;margin:0 auto;padding:18px 12px calc(32px + env(safe-area-inset-bottom))}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 18px}
+h1{font-size:30px;letter-spacing:-1px;line-height:1.12;margin:0;font-weight:820}
+/* Compact TaxiCheck wordmark; keep all surrounding dashboard styles unchanged. */
+#homeBrand{min-width:0;max-width:100%}
+#homeBrand .brand-lockup{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:clamp(23px,7.4vw,30px)}
+#homeBrand .brand-text{display:inline-flex;align-items:baseline;min-width:0}
+#homeBrand .brand-taxi{color:#f4f8ff}
+#homeBrand .brand-check{color:#ffcb19}
+#homeBrand .brand-car{width:38px;height:38px;object-fit:contain;flex:0 0 38px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.22))}
+@media(max-width:360px){#homeBrand .brand-lockup{gap:4px;font-size:clamp(21px,7vw,26px)}#homeBrand .brand-car{width:34px;height:34px;flex-basis:34px}}
+
+.demo-tag{font-size:10px;letter-spacing:.3px;color:#91b8e7;margin-top:5px;font-weight:650}
+.gear{height:45px;width:45px;flex:none;border:1px solid var(--border);border-radius:13px;background:#162333;color:#d8e8f8;font-size:24px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px}
+.period-panel{padding:8px 10px;margin:0 0 14px}
+.period-line{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.period-label{font-size:clamp(11px,3.35vw,13px);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.14px;min-width:0}
+.edit-period{width:42px;height:42px;flex:none;border:1px solid #46617c;background:#1d3047;color:#e5f0ff;border-radius:11px;font-size:21px;line-height:1}
+.period-editor{border-top:1px solid #2a3e52;margin-top:8px;padding:12px 2px 4px}
+.period-editor-title{font-size:14px;font-weight:750;margin:0 0 8px}
+.period-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#112031;border:1px solid #2d4560;padding:4px;border-radius:12px;margin-bottom:10px}
+.period-mode-tab{border:0;border-radius:9px;min-height:39px;padding:7px 10px;background:transparent;color:#91a9c3;font-size:13px;font-weight:740;white-space:nowrap}
+.period-mode-tab.active{background:#2b4c72;color:#f0f7ff;box-shadow:inset 0 0 0 1px #567da7}
+.custom-period-summary{color:#c4d8ec;font-size:12px;font-weight:700;margin:8px 0 0}
+#customModePanel .period-editor{border-top:none;margin-top:4px;padding:8px 1px 3px}
+#shiftModePanel .shift-editor-panel{margin:11px 0 1px;background:#152538;border-color:#3d5571}
+#shiftModePanel .shift-editor-toggle{min-height:44px}
+
+.period-label{flex:1;overflow:hidden;text-overflow:ellipsis}
+.shift-ribbon{display:flex;gap:7px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:8px 0 0}.shift-ribbon::-webkit-scrollbar{display:none}
+.shift-chip{flex:0 0 calc((100% - 14px)/3);min-width:0;min-height:71px;border:1px solid #38536c;border-radius:11px;background:#1b2b3d;color:#cbdcef;text-align:center;padding:7px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;scroll-snap-align:start;font-variant-numeric:tabular-nums}
+.shift-chip-dates{height:34px;display:grid;grid-template-rows:19px 15px;align-items:center;justify-items:center;width:100%;min-width:0}
+.shift-chip .shift-chip-date-start{font-size:16px;line-height:19px;font-weight:810;color:#edf5ff;white-space:nowrap;letter-spacing:-.25px}
+.shift-chip .shift-chip-date-end{font-size:11px;line-height:15px;font-weight:650;color:#9eb9d5;white-space:nowrap}
+.shift-chip:not(.cross-day) .shift-chip-date-start{grid-row:1 / 3;align-self:center;font-size:17px}
+.shift-chip:not(.cross-day) .shift-chip-date-end{display:none}
+.shift-chip .shift-chip-kind{font-size:10px;line-height:13px;color:#95aac0;white-space:nowrap}
+.shift-chip.selected{border-color:#78b6f4;background:#233f5e;box-shadow:inset 0 0 0 1px #466f97;color:#f2f8ff}
+.shift-chip.selected .shift-chip-date-end,.shift-chip.selected .shift-chip-kind{color:#b9dfff}
+.shift-ribbon-note{font-size:10px;color:#869fb8;margin:5px 0 0}
+.shift-editor-panel{padding:0;margin:0 0 13px;overflow:hidden}.shift-editor-toggle{display:flex;width:100%;min-height:44px;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border:0;background:transparent;color:var(--txt);text-align:left;font-weight:720}.shift-editor-toggle small{color:#a5bcd2;font-size:11px;font-weight:500}
+.shift-editor-content{border-top:1px solid #304254;padding:11px 12px 13px}.shift-edit-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.63fr);gap:8px;margin-top:8px}.shift-edit-actions{display:flex;gap:8px;margin-top:12px}.shift-edit-actions button{min-height:41px;padding:8px 12px;border-radius:10px;font-size:13px;font-weight:700}.shift-edit-save{background:#336eaf;border:1px solid #689dd6;color:white;flex:1}.shift-edit-cancel{background:#203247;color:#d9e7f7;border:1px solid #48627c}
+.shift-edit-caption{font-size:11px;color:#9cb4cd;margin:0 0 4px}.shift-edit-label{display:block;color:#adc2d8;font-size:11px;font-weight:650}.shift-edit-input{display:block;width:100%;height:40px;margin:4px 0 0;padding:7px 9px;background:#1d2d41;border:1px solid #48637f;border-radius:9px;color:var(--txt);font-size:16px}
+.shift-files{display:grid;gap:8px;margin-top:13px}.shift-file-card{background:#182738;border:1px solid #31465e;border-radius:10px;padding:9px}.shift-file-title{font-weight:650;font-size:12px}.shift-file-input{font-size:11px;display:block;width:100%;margin:5px 0;color:#c8d9ec;max-width:100%}.shift-file-input::file-selector-button{color:#e3efff;background:#294563;border:1px solid #567c9e;padding:6px;border-radius:7px;margin-right:7px}.shift-file-current{color:#98b4d0;font-size:11px;overflow-wrap:anywhere}.shift-file-preview{max-height:85px;max-width:100%;object-fit:contain;border-radius:7px;margin-top:6px}.shift-file-clear{margin-top:5px;padding:4px 8px;background:#26394d;border:1px solid #496781;border-radius:8px;color:#f5bdc7;font-size:11px}.shift-file-clear[hidden],.shift-file-preview[hidden]{display:none!important}.shift-waybill-list{display:grid;gap:7px;margin-top:8px}.shift-waybill-item{display:flex;align-items:center;gap:8px;min-width:0;background:#142335;border:1px solid #2b445e;border-radius:9px;padding:6px}.shift-waybill-item img{width:45px;height:54px;object-fit:cover;border-radius:6px;flex:none}.shift-waybill-name{flex:1;min-width:0;overflow-wrap:anywhere;font-size:11px;color:#c3d7ea}.shift-waybill-remove{border:1px solid #6b4856;color:#ffc5ce;background:#3b2732;border-radius:8px;font-size:11px;padding:7px;min-height:34px}.shift-file-input:disabled{opacity:.5}
+
+.period-group{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,0.55fr);column-gap:8px;align-items:end;margin-bottom:9px}
+.field-wrap{min-width:0}.field-caption{display:block;color:#b1c5dc;font-size:11px;font-weight:650;margin:0 0 4px}
+.fake-native{position:relative;display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;height:42px;min-width:0;border:1px solid #47617c;background:#1d2d41;border-radius:10px;padding:0 10px;color:var(--txt);font-size:13px;overflow:hidden}
+.fake-native .native-value{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.fake-native .native-symbol{font-size:14px;color:#8fa7c2;flex:none}
+.fake-native input{position:absolute;inset:0;width:100%;height:100%;min-width:0;max-width:100%;opacity:0;z-index:2;cursor:pointer;-webkit-appearance:none;appearance:none}
+.fake-native:focus-within{border-color:#78baff;outline:1px solid #78baff}
+.period-submit{width:100%;min-height:43px;background:#24405c;border:1px solid #466684;color:#e8f2ff;border-radius:10px;font-weight:750;font-size:14px}
+.period-help{font-size:10px;color:#92a8be;margin:8px 0 0;line-height:1.35}
+.mini-note{margin:0 0 10px;color:var(--muted);font-size:11px}
+.mini-note:empty{display:none}
+.net{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(100px,1fr);gap:12px;align-items:center;background:linear-gradient(135deg,#173c31,#142a26);border-color:#3d6751;min-height:160px;padding:20px 17px;cursor:pointer}
+.net-caption{font-size:16px;font-weight:750}.net-figure{display:flex;align-items:center;gap:5px;min-width:0}
+.net-num{font-size:clamp(24px,5.5vw,34px);font-weight:850;color:#b8f4cf;white-space:nowrap;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.net-alert{border:1px solid #d06070;background:#882c3b;color:#fff2f3;width:22px;height:22px;border-radius:50%;font-size:17px;font-weight:900;flex:none;line-height:18px;padding:0}
+.net-note{font-size:11px;color:#cfdfd4;margin:6px 0 0}.review-title{font-size:12px;font-weight:750;color:#ffb4be;margin:10px 0 5px}.review-list{margin:5px 0 10px;padding-left:19px;color:#e1c9cb;font-size:12px;line-height:1.5}.review-list li+li{margin-top:5px}.review-action{border:1px solid #a46e78;background:#472d39;color:#ffe0e5;border-radius:10px;min-height:40px;padding:8px 12px;font-weight:680;font-size:12px}.net.alerted{border-color:#855b60}
+.work-summary{border-left:1px solid #476052;padding-left:12px;min-width:0}
+.work-summary span{display:block;color:#bdd4c5;font-size:10px}.work-summary strong{display:block;font-size:14px;margin:1px 0 8px}
+.work-summary button{border:1px solid #4b705d;background:#213d31;color:#eaf3fb;border-radius:10px;min-height:37px;padding:6px 11px;font-weight:600;font-size:12px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:11px 0}
+.tile{text-align:left;min-height:104px;padding:9px 12px;display:flex;flex-direction:column;justify-content:center;gap:6px;border-radius:18px;border:1px solid var(--border);background:var(--tile);color:#eaf3fb;min-width:0}
+.tile>span{font-size:14px;font-weight:720;line-height:1.25}.tile strong{display:block;font-size:clamp(16px,4.55vw,19px);font-weight:850;line-height:1.2;white-space:nowrap;letter-spacing:-.45px;font-variant-numeric:tabular-nums}
+.tile-value-group,.tile-rent-body{min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;min-width:0;align-self:stretch}
+.tile-value-group>strong,.tile-rent-body>strong{line-height:1.18;flex:none}
+.green{color:var(--green)!important}.red{color:var(--red)!important}.blue{color:var(--blue)!important}.muted{color:var(--muted)!important}.gold{color:var(--gold)!important}
+.tile-rent-breakdown{display:grid;gap:1px;line-height:1.2;color:#afc1d6;min-height:0}.tile .tile-rent-breakdown span{font-size:10.5px;font-weight:550;line-height:1.25;overflow-wrap:anywhere}.tile-rent-breakdown[hidden]{display:none}
+.tile .tile-meta{display:block;color:#8faac6;font-size:10.5px;line-height:1.2;font-weight:550;min-height:0;overflow-wrap:anywhere}.demo-notice{color:#87a9d1}.demo-hero-note{font-size:10px;color:#a6c3df}
+.big-button{display:block;width:100%;min-height:56px;border:0;border-radius:13px;background:linear-gradient(120deg,#508dec,#3269bc);color:white;font-size:17px;font-weight:820}
+.sync-line{width:100%;border:0;background:transparent;color:var(--muted);padding:9px 0;font-size:11px;min-height:35px}
+.backline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:1px 0 12px}
+.back{border:1px solid #45617e;background:#1d3047;color:#edf4fb;min-height:39px;padding:7px 12px;border-radius:10px;font-weight:650}
+.detail-title{font-size:21px;font-weight:780;letter-spacing:-.3px;margin:0}
+.detail-hero{padding:16px;margin-bottom:10px}
+.hero-caption{font-size:12px;color:#c2d1e3;font-weight:700}.hero-total{font-size:clamp(26px,6vw,34px);font-weight:850;letter-spacing:-.7px;margin:4px 0 0;font-variant-numeric:tabular-nums}
+.hero-help{font-size:11px;color:#98acc3;margin:5px 0 0;line-height:1.45}
+.commission-hero{background:#361a23;border-color:#82414b}
+.detail-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:9px 2px;border-bottom:1px solid #2c4154;font-size:13px}
+.detail-row:last-child{border-bottom:0}.detail-row strong{font-variant-numeric:tabular-nums;white-space:nowrap}
+.compact-heading{font-size:16px;margin:17px 0 9px;font-weight:750}
+.small-label{font-size:11px;color:var(--muted);margin:7px 0 4px}
+.action-add{width:100%;min-height:42px;background:#1d3047;border:1px solid #46617c;border-radius:10px;color:#eaf4ff;font-weight:750;margin:8px 0}
+.form-box{margin:10px 0;padding:12px;border:1px solid #33475e;border-radius:14px;background:#152235}
+.form-title{font-size:14px;font-weight:750;margin:0 0 8px}
+.form-grid{display:grid;grid-template-columns:minmax(0,0.82fr) minmax(0,1.18fr);gap:8px;align-items:end}
+.input-label{display:block;min-width:0;font-size:11px;color:#a9bed4;font-weight:650}
+.input-label input,.input-label textarea,.input-label select{display:block;width:100%;min-width:0;height:42px;margin:4px 0 0;padding:9px 10px;border:1px solid #4a627a;border-radius:10px;background:#1d2d41;color:var(--txt);font-size:16px}
+.input-label textarea{height:43px;min-height:43px;resize:vertical;max-height:120px}
+.form-buttons{display:flex;gap:8px;margin-top:9px}.primary-small{background:#346fca;border:1px solid #5284cb;color:white;font-weight:800;border-radius:10px;min-height:42px;flex:1}.ghost-small{border:1px solid #48647d;background:#203146;color:var(--txt);border-radius:10px;min-height:42px;padding:6px 13px}
+.empty{font-size:12px;color:var(--muted);padding:8px 0}
+.records{display:grid;gap:7px;margin:6px 0}
+.record{background:#131f2e;border:1px solid #304054;border-radius:12px;overflow:hidden}
+.record-main{width:100%;display:block;border:0;background:transparent;color:var(--txt);padding:11px 12px;text-align:left;min-height:74px}
+.record-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.record-name{font-size:13px;font-weight:730;line-height:1.25;min-width:0}.record-amount{font-size:15px;white-space:nowrap;font-weight:850;font-variant-numeric:tabular-nums}
+.record-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;font-size:11px;color:var(--muted)}.record-bottom span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chevron{color:#9bb3ce;font-size:16px}
+.record-expanded{border-top:1px solid #304054;padding:10px 12px;color:#bbcee1;font-size:12px}.record-expanded p{margin:4px 0}
+.row-actions{display:flex;gap:8px;margin-top:9px}.row-actions button{border:1px solid #48647d;background:#23364b;color:#edf4fb;border-radius:9px;padding:7px 11px;font-size:12px;min-height:36px}
+.row-actions .delete{color:#ffb6c0;border-color:#8a4b5e}
+.commission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 5px}
+.commission-card{display:flex;flex-direction:column;justify-content:space-between;gap:8px;text-align:left;border:1px solid #435061;background:#162333;border-radius:13px;color:var(--txt);min-height:98px;padding:11px}.commission-card span{font-size:12px;line-height:1.25;font-weight:750}.commission-card strong{color:#ffb8c1;font-size:16px;font-weight:850;white-space:nowrap}.commission-card.selected{border-color:#d78b94;background:#3b222d}
+.filter-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0}.filter-line button{border:1px solid #48647d;background:#203146;color:var(--txt);border-radius:9px;min-height:36px;padding:5px 10px}.filter-line small{color:var(--muted)}
+.info-notice{font-size:11px;color:#b5c7dc;background:#182839;border:1px solid #2e435b;border-radius:10px;padding:9px 10px;margin:9px 0}
+.warn-notice{font-size:11px;color:#f0cfa9;background:#352b24;border:1px solid #604a37;border-radius:10px;padding:9px 10px;margin:9px 0}
+.simple-settings{display:grid;gap:7px}.simple-settings button{min-height:42px;border-radius:10px;background:#203248;color:var(--txt);border:1px solid #405d7b}
+.app.is-refreshing::before{content:"";position:fixed;inset:0;z-index:11;pointer-events:none;background:linear-gradient(115deg,transparent 12%,rgba(144,199,255,.22) 46%,transparent 82%);opacity:0;animation:taxicheck-refresh-flash .68s ease-in-out}
+.app.is-refreshing .panel,.app.is-refreshing .tile{animation:taxicheck-refresh-pulse .65s ease-in-out}
+.big-button.is-refreshing{position:relative;background:linear-gradient(120deg,#497cae,#325d8b)}
+.big-button.is-refreshing::after{content:"";display:inline-block;width:14px;height:14px;margin-left:10px;vertical-align:-2px;border:2px solid #ffffff73;border-top-color:#fff;border-radius:50%;animation:taxicheck-spinner .65s linear infinite}
+@keyframes taxicheck-refresh-flash{0%,100%{opacity:0}30%{opacity:.55}58%{opacity:.18}78%{opacity:.45}}
+@keyframes taxicheck-refresh-pulse{0%,100%{opacity:1}32%{opacity:.70}56%{opacity:.95}75%{opacity:.81}}
+@keyframes taxicheck-spinner{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.app.is-refreshing::before,.app.is-refreshing .panel,.app.is-refreshing .tile,.big-button.is-refreshing::after{animation:none!important}}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#244a5f;color:#f5fbff;border:1px solid #5e91aa;border-radius:11px;padding:9px 13px;box-shadow:0 8px 30px #0007;max-width:90vw;min-width:180px;text-align:center;font-size:12px;z-index:15;pointer-events:none}
+[hidden]{display:none!important}
+@media(min-width:700px){.app{padding-top:24px}.tile{min-height:107px;padding:11px 15px}.tile strong{font-size:20px}.commission-card{min-height:110px}}
+@media(max-width:360px){.app{padding:13px 9px 28px}.tile{padding:8px 9px;min-height:102px}.tile>span{font-size:14px}.tile strong{font-size:clamp(14px,4.4vw,16.5px);letter-spacing:-.55px}.tile .tile-meta,.tile .tile-rent-breakdown span{font-size:10px}.net{padding:16px 11px;gap:8px}.net-caption{font-size:14px}.net-num{font-size:23px}.work-summary{padding-left:9px}.period-label{font-size:11px}.record-amount{font-size:14px}}
+/* TaxiCheck frosted-glass experiment: restrained dark glass, readable on mobile.
+   This is a CSS interpretation, not native iOS system Liquid Glass. */
+:root{
+ --glass-edge:rgba(194,221,249,.27);
+ --glass-inner:rgba(243,250,255,.18);
+ --glass-shadow:0 8px 25px rgba(0,5,16,.20),inset 0 1px 0 var(--glass-inner);
+}
+body{
+ background:
+  radial-gradient(ellipse 92% 58% at 85% -10%,rgba(59,104,161,.26),transparent 70%),
+  radial-gradient(ellipse 90% 65% at 6% 98%,rgba(20,107,123,.13),transparent 75%),
+  #0b121e;
+ background-attachment:fixed;
+}
+/* Content surfaces stay mostly opaque; light edge/reflection gives depth. */
+.panel,.tile,.shift-chip,.record,.commission-card,.form-box,.shift-file-card{
+ background:
+  linear-gradient(155deg,rgba(236,248,255,.085),rgba(178,207,238,.027) 42%,rgba(9,19,35,.065) 100%),
+  rgba(18,33,52,.79);
+ border-color:var(--glass-edge);
+ box-shadow:var(--glass-shadow);
+}
+.period-panel,.tile,.shift-chip,.net,.detail-hero{
+ -webkit-backdrop-filter:blur(12px) saturate(132%);
+ backdrop-filter:blur(12px) saturate(132%);
+}
+.tile,.shift-chip,.period-mode-tab,.commission-card{
+ position:relative;
+ overflow:hidden;
+}
+.tile::before,.shift-chip::before,.commission-card::before{
+ content:"";position:absolute;inset:0 0 auto;height:1px;pointer-events:none;
+ background:linear-gradient(90deg,transparent,rgba(245,252,255,.27) 28%,rgba(245,252,255,.11) 78%,transparent);
+}
+.tile{
+ background:
+  linear-gradient(155deg,rgba(239,249,255,.10) 0%,rgba(205,226,252,.037) 42%,rgba(9,19,35,.07) 100%),
+  rgba(19,34,53,.74);
+ border-color:rgba(190,217,244,.24);
+ box-shadow:0 9px 26px rgba(0,7,22,.25),inset 0 1px 0 rgba(250,252,255,.13);
+}
+.tile:active,.shift-chip:active{transform:scale(.989)}
+.shift-chip{
+ background:linear-gradient(157deg,rgba(226,244,255,.09),rgba(86,129,173,.045) 65%),rgba(24,41,62,.76);
+ border-color:rgba(185,216,249,.22);
+}
+.shift-chip.selected{
+ background:linear-gradient(140deg,rgba(153,203,255,.23),rgba(56,110,174,.13) 52%,rgba(29,62,100,.24)),rgba(29,53,82,.84);
+ border-color:rgba(159,211,255,.74);
+ box-shadow:0 5px 20px rgba(9,51,93,.22),inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(86,145,209,.20);
+}
+.period-mode-tabs{background:rgba(11,24,41,.64);border-color:rgba(176,207,240,.17)}
+.period-mode-tab.active{
+ background:linear-gradient(145deg,rgba(157,203,247,.19),rgba(52,101,152,.15)),rgba(40,73,110,.77);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 2px 8px rgba(4,12,31,.18);
+}
+#shiftModePanel .shift-editor-panel{
+ background:linear-gradient(160deg,rgba(222,239,255,.06),transparent 60%),rgba(15,30,48,.84);
+ border-color:rgba(168,205,241,.22);
+}
+.net{
+ background:
+  linear-gradient(143deg,rgba(190,255,219,.11),rgba(40,118,87,.07) 65%,rgba(13,51,47,.1)),
+  rgba(17,52,42,.84);
+ border-color:rgba(141,218,177,.29);
+ box-shadow:0 10px 28px rgba(0,13,20,.25),inset 0 1px 0 rgba(227,255,243,.16);
+}
+.net.alerted{border-color:rgba(255,142,161,.57)}
+.commission-card,.commission-hero{
+ background:linear-gradient(155deg,rgba(255,195,199,.075),transparent 65%),rgba(49,27,39,.79);
+ border-color:rgba(235,146,161,.29);
+}
+.commission-card.selected{border-color:rgba(255,174,191,.76);background:linear-gradient(152deg,rgba(255,174,191,.14),rgba(98,39,61,.14)),rgba(56,29,42,.85)}
+.record,.form-box{background:linear-gradient(155deg,rgba(242,248,255,.056),transparent 64%),rgba(17,31,49,.84)}
+.shift-file-card{background:rgba(20,36,55,.85)}
+.fake-native,.shift-edit-input,.input-label input,.input-label textarea,.input-label select{
+ background:rgba(18,34,53,.86);
+ border-color:rgba(174,207,243,.29);
+}
+.info-notice{background:rgba(20,40,60,.77);border-color:rgba(168,202,238,.20)}
+/* Keep the financial colors semantic, never wash them out with glass. */
+.net-num.green,.tile .green,.detail-row .green{color:var(--green)!important}
+.net-num.red,.tile .red,.detail-row .red{color:var(--red)!important}
+.tile .blue,.detail-row .blue{color:var(--blue)!important}
+/* Header navigation remains at the top left on all detail screens. */
+.header-main{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.header-detail-title{font-size:clamp(18px,5vw,22px);line-height:1.2;font-weight:790;letter-spacing:-.35px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.header-back{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:44px;min-width:94px;flex:none;padding:7px 14px 7px 9px;color:#eaf4ff;border-radius:999px;background:linear-gradient(150deg,rgba(218,236,255,.15),rgba(70,110,156,.12)),rgba(25,45,70,.82);border:1px solid rgba(192,219,246,.35);box-shadow:0 4px 16px rgba(0,8,24,.18),inset 0 1px 0 rgba(255,255,255,.14);font-size:14px;font-weight:710}
+.header-back span{font-size:29px;font-weight:400;line-height:17px;margin-top:-3px}
+.header.detail-nav{position:sticky;top:max(0px, env(safe-area-inset-top));z-index:12;margin:0 -7px 13px;padding:9px 7px;background:rgba(13,27,45,.91);border-radius:21px;-webkit-backdrop-filter:blur(14px) saturate(128%);backdrop-filter:blur(14px) saturate(128%);border:1px solid rgba(196,221,248,.16);box-shadow:0 8px 22px rgba(0,5,18,.23)}
+@media(prefers-reduced-transparency:reduce){.header.detail-nav{background:#142438;-webkit-backdrop-filter:none;backdrop-filter:none}}
+/* Rounder iOS-inspired capsule geometry. Large surfaces remain soft rectangles. */
+.panel{border-radius:25px}
+.period-panel{border-radius:28px}
+.tile{border-radius:29px}
+/* Paired cash amounts: same font, stacked without spacer rows. */
+.tile-cash{justify-content:center;gap:4px}
+.tile-cash-body{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile-cash-line{display:flex;flex-direction:column;gap:1px;min-width:0}
+.tile-cash .cash-caption{display:block;color:#bad0e2;font-size:11.5px;font-weight:600;line-height:1.15;white-space:nowrap}
+.tile-cash .cash-amount{display:block;font-size:clamp(16px,4.55vw,19px);font-weight:850;line-height:1.15;letter-spacing:-.45px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tile-cash .cash-amount.cash-gross{color:#ffd129!important}
+.tile-cash .cash-amount.green{color:var(--green)!important}
+
+.net,.detail-hero{border-radius:29px}
+.shift-chip{border-radius:35px}
+.shift-editor-panel,#shiftModePanel .shift-editor-panel{border-radius:22px}
+.shift-editor-content{border-radius:0 0 22px 22px}
+.period-mode-tabs{border-radius:999px}
+.period-mode-tab{border-radius:999px}
+.record{border-radius:22px}
+.commission-card{border-radius:25px}
+.form-box{border-radius:24px}
+.shift-file-card{border-radius:20px}
+.shift-waybill-item{border-radius:17px}
+.fake-native,.shift-edit-input,.input-label input,.input-label textarea,.input-label select{border-radius:17px}
+.period-submit,.action-add,.primary-small,.ghost-small,.shift-edit-actions button,.shift-file-clear,.shift-waybill-remove,.row-actions button,.filter-line button,.simple-settings button,.review-action{border-radius:999px}
+.big-button{border-radius:999px;box-shadow:0 8px 23px rgba(35,87,179,.24),inset 0 1px 0 rgba(255,255,255,.19)}
+.gear,.back,.work-summary button{border-radius:20px}
+/* Fallback maintains readable solid backgrounds on devices without blur. */
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+ .panel,.tile,.shift-chip,.net,.record,.form-box,.commission-card,.shift-file-card{background-color:#182b40}
+ .net{background-color:#183b32}
+}
+@media(prefers-reduced-transparency:reduce){
+ .panel,.tile,.shift-chip,.record,.commission-card,.form-box,.shift-file-card{background:#18283d}
+ .period-panel,.tile,.shift-chip,.net,.detail-hero{-webkit-backdrop-filter:none;backdrop-filter:none}
+ .net{background:#163c31}.commission-card,.commission-hero{background:#321f2c}
+}
+@media(prefers-reduced-motion:reduce){
+ .tile:active,.shift-chip:active{transform:none}
+}
+
+/* Public, per-browser manual QA checklist. No accounts, uploads or server state. */
+.qa-panel{margin-top:16px;border:1px solid var(--border);border-radius:17px;background:var(--panel);padding:12px;min-width:0}
+.qa-panel details{min-width:0}
+.qa-panel summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:750;font-size:16px;padding:5px 2px;min-height:36px}
+.qa-panel summary::-webkit-details-marker{display:none}
+.qa-panel summary::before{content:'▸';color:#80b9fa;font-size:17px;flex:none}
+.qa-panel details[open] summary::before{content:'▾'}
+.qa-heading{flex:1;min-width:0}
+.qa-count{font-size:13px;font-variant-numeric:tabular-nums;color:#99c9fb;font-weight:700;white-space:nowrap}
+.qa-intro,.qa-storage-note{font-size:12px;line-height:1.55;color:var(--muted);margin:10px 0}
+.qa-progress{display:block;width:100%;height:12px;accent-color:#5aac8c;margin:8px 0 13px}
+.qa-group{border-top:1px solid var(--border);padding-top:12px;margin-top:12px}
+.qa-group h3{font-size:13px;color:#bfdbf3;margin:0 0 9px;font-weight:750}
+.qa-task{display:flex;align-items:flex-start;gap:11px;padding:10px 8px;margin:5px 0;border:1px solid #34465a;border-radius:12px;cursor:pointer;line-height:1.45;font-size:13px;overflow-wrap:anywhere;min-height:44px}
+.qa-task:has(input:checked){border-color:#376b59;background:rgba(47,141,100,.09)}
+.qa-task input{width:19px;height:19px;min-width:19px;margin:1px 0 0;accent-color:#52b68b}
+.qa-task input:focus-visible{outline:2px solid #a0cef9;outline-offset:3px}
+.qa-task input:checked+span{color:var(--muted)}
+.qa-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 6px}
+.qa-actions button{min-width:0;min-height:46px;border-radius:12px;border:1px solid #4d6886;background:#1e344b;color:var(--txt);font-size:13px;padding:8px}
+.qa-actions #qaReset{border-color:#80636b;color:#ffd5d9}
+.qa-storage-warning{padding:10px;border:1px solid #a17a41;border-radius:9px;color:#ffdea3;font-size:12px;line-height:1.4}
+.qa-device{margin:12px 0;padding:12px;border:1px solid #36506a;background:#142438;border-radius:13px;min-width:0}
+.qa-device h3{margin:0 0 9px;font-size:14px;color:#c3e0fa}
+.qa-device-grid{display:grid;grid-template-columns:90px minmax(0,1fr);gap:7px 10px;font-size:12px;line-height:1.45}
+.qa-device-grid dt{color:var(--muted)}.qa-device-grid dd{margin:0;overflow-wrap:anywhere}
+.qa-model-label{display:block;margin-top:12px;font-size:12px;font-weight:650}
+.qa-model-input{display:block;width:100%;min-height:44px;margin-top:6px;padding:9px 11px;border-radius:10px;background:#0c1c2d;color:var(--txt);border:1px solid #526b86;font:inherit;font-size:16px}
+.qa-model-input:focus-visible{outline:2px solid #9ac9f8;outline-offset:2px}
+.qa-device-note{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+@media(max-width:360px){.qa-panel{padding:9px}.qa-task{padding:10px 6px}.qa-actions button{font-size:12px}}
+
+/* Structured first four KPIs: consistent heading/divider, data anchored below.
+   The bottom four tiles intentionally keep their previous layout. */
+.tile.tile-finance{justify-content:space-between;gap:6px;padding:9px 11px}
+.tile-finance>.tile-finance-heading{display:block;align-self:stretch;font-size:14px;line-height:1.2;font-weight:740;padding-bottom:5px;border-bottom:1px solid rgba(195,218,244,.15)}
+.tile-finance .tile-finance-body{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;min-width:0}
+.tile-finance .tile-value-group,.tile-finance .tile-rent-body{justify-content:flex-end;gap:2px}
+.tile-finance .tile-rent-breakdown{gap:0}
+.tile-commissions .tile-finance-body>.tile-meta{min-height:0;line-height:1.2}
+.tile-commissions .tile-finance-body>strong{line-height:1.18}
+.tile-commission-breakdown{display:grid;gap:1px;min-width:0;margin-top:2px}
+.tile-commission-breakdown span{display:block;font-size:10.5px;line-height:1.2;color:#afc1d6;font-weight:550;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tile.tile-finance.tile-fuel{justify-content:flex-start;gap:6px}
+.tile-fuel .tile-value-group{justify-content:flex-start}
+@media(max-width:360px){.tile-commission-breakdown span{font-size:10px}}
+.tile-cash.tile-finance{gap:5px}
+.tile-cash.tile-finance .tile-cash-body{gap:3px}
+@media(max-width:360px){.tile.tile-finance{padding:8px 9px}.tile-finance>.tile-finance-heading{padding-bottom:4px}}
+
+/* Mobile dashboard fit: compact without reducing KPI numerals or tap targets. */
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.app{padding-top:8px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+.header{margin:0 0 6px;min-height:46px}
+.demo-tag{margin-top:1px;font-size:10px}
+.gear{height:44px;width:44px}
+.period-panel{padding:7px 9px 8px;margin-bottom:7px;border-radius:22px}
+.period-mode-tabs{margin-bottom:4px;padding:2px;gap:3px}
+.period-mode-tab{min-height:34px;padding:5px 8px;font-size:13px}
+.period-line{min-height:40px;gap:7px}
+.period-label{font-size:clamp(11px,3.45vw,13px);font-weight:600;letter-spacing:-.1px}
+.shift-edit-shortcut{width:40px!important;min-width:40px!important;min-height:40px!important;height:40px!important;display:flex;align-items:center;justify-content:center;padding:0!important;font-size:20px;background:#25405a;border:1px solid #507ca2;border-radius:50%;flex:none;color:#e0f1ff}
+.shift-edit-shortcut[aria-expanded="true"]{background:#375e84;border-color:#8dc3f8}
+#shiftEditorPanel{margin:6px 0 0!important;border-radius:17px}
+#shiftEditorPanel:has(#shiftEditContent[hidden]){display:none}
+#shiftEditorPanel .shift-editor-content{border-top:0;padding:10px}
+.shift-ribbon{gap:6px;margin:3px 0 0}
+.shift-chip{flex:0 0 calc((100% - 12px)/3);min-height:48px;height:48px;padding:3px 6px;border-radius:999px;gap:0;box-shadow:none}
+.shift-chip-dates{height:auto;min-height:21px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.1}
+.shift-chip .shift-chip-date-start,.shift-chip:not(.cross-day) .shift-chip-date-start{font-size:15px;line-height:18px;align-self:auto}
+.shift-chip .shift-chip-date-end{font-size:10.5px;line-height:13px}
+.shift-chip .shift-chip-kind{display:none}
+.shift-ribbon-note{display:none}
+.custom-period-summary{display:none}
+#customModePanel .period-editor{margin-top:1px;padding:5px 0 3px}
+#customModePanel .period-editor-title{display:none}
+.period-group{margin-bottom:6px}
+.period-help{font-size:11px}
+#globalNotice{font-size:10px;line-height:14px;margin:0 1px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.net{min-height:112px;padding:11px 12px;gap:8px;border-radius:21px}
+.net-caption{font-size:14px}
+.net-num{font-size:clamp(23px,5.7vw,31px)}
+.net-note{font-size:10px;line-height:1.2;margin-top:3px}
+.work-summary{padding-left:9px}
+.work-summary span{font-size:10px;line-height:1.2}
+.work-summary strong{font-size:13px;line-height:1.2;margin:1px 0 5px}
+.work-summary button{min-height:32px;padding:4px 9px}
+.tiles{gap:7px;margin:7px 0}
+.tile{min-height:78px;padding:8px 11px;gap:3px;border-radius:19px;justify-content:center}
+.tile>span{font-size:14px;line-height:1.23}
+.tile-value-group,.tile-rent-body{gap:2px}
+.tile .tile-meta{font-size:10.5px;line-height:1.18}
+.tile .tile-rent-breakdown span{font-size:10.5px;line-height:1.2}
+.tile-cash{min-height:107px;padding-top:7px;padding-bottom:7px;gap:3px}
+.tile-cash-body{gap:3px}
+.tile-cash .cash-caption{font-size:11.5px}
+.big-button{min-height:44px;font-size:15px}
+.sync-line{min-height:20px;padding:2px 0;font-size:10px}
+@media(min-width:700px){.tile{min-height:80px;padding:10px 14px}.tile-cash{min-height:108px}}
+@media(max-width:360px){.app{padding:8px 8px 10px}.tile{min-height:76px;padding:7px 9px}.tile-cash{min-height:108px;padding:7px 9px}.net{min-height:112px;padding:9px 10px}.shift-chip .shift-chip-date-start{font-size:14px}.period-label{font-size:11px}}
+
+/* Easter egg: user's original turbine graphic, same 44px gear button. */
+.gear{display:flex;align-items:center;justify-content:center;padding:0}
+.gear-icon-image{width:34px;height:34px;object-fit:contain;display:block;pointer-events:none;user-select:none}
+
+/* Simplified driver-first home. Previous detailed tiles now live in #report. */
+.app{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+.home-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:5px 0 13px}
+.tile.home-kpi{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;min-height:166px;padding:17px 13px 14px;border-radius:26px;gap:7px;background:linear-gradient(155deg,rgba(63,100,139,.29),rgba(20,34,52,.85));border:1px solid rgba(189,217,248,.34);box-shadow:0 8px 22px rgba(0,6,18,.18),inset 0 1px 0 rgba(243,251,255,.13)}
+.tile.home-kpi-net{background:linear-gradient(145deg,rgba(31,93,69,.48),rgba(17,43,38,.89));border-color:rgba(109,200,156,.41)}
+.home-kpi-label{font-size:16px!important;font-weight:790!important;line-height:1.25}
+.tile.home-kpi strong{font-size:clamp(21px,5.8vw,30px);letter-spacing:-.8px;font-weight:860;line-height:1.13;margin-top:11px;white-space:nowrap}
+.home-kpi-net strong{color:#a0efc6}
+.home-kpi small{font-size:11.5px;line-height:1.3;color:#aabfd2;font-weight:550}
+.home-kpi-net small{color:#bedbc8}
+.home-quick{margin:0 0 10px}
+.home-quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.quick-add-btn{min-height:52px;min-width:0;padding:8px 8px;border-radius:18px;border:1px solid rgba(164,199,235,.34);background:linear-gradient(155deg,rgba(52,90,128,.3),rgba(28,47,70,.72));color:#e7f3ff;font-size:13px;font-weight:730;box-shadow:inset 0 1px 0 rgba(241,251,255,.1)}
+.quick-add-btn[aria-expanded="true"]{border-color:#90c7ff;background:#234461}
+.quick-entry-form{margin:10px 0 0;padding:13px;border-radius:21px}
+.quick-entry-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}
+.quick-entry-head button{min-height:40px;min-width:40px;border-radius:50%;border:1px solid rgba(166,205,245,.3);color:var(--txt);background:#253d55}
+.quick-entry-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.quick-entry-fields .input-label{font-size:12px}
+.quick-entry-fields .input-label:first-child{grid-column:1/-1}
+.quick-entry-fields .quick-comment{grid-column:1/-1}
+.quick-entry-fields #quickLitresWrap:not([hidden]){grid-column:1/-1}
+.quick-entry-fields input{height:44px;margin-top:5px}
+.quick-entry-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}
+.quick-entry-foot span{font-size:10.5px;color:#a6bad0;max-width:58%;line-height:1.3}
+.quick-submit{height:44px;min-width:126px;padding:8px 14px;border-radius:999px;border:1px solid #8dbcee;background:#396ca6;color:#fff;font-size:14px;font-weight:760}
+.share-placeholder{display:flex;width:100%;align-items:center;justify-content:center;gap:9px;min-height:46px;border:1px dashed rgba(157,190,220,.3);border-radius:17px;background:rgba(26,43,62,.34);color:#9db0c2;font-weight:710;font-size:13px}
+.share-placeholder small{font-size:10px;color:#8097ad;font-weight:600}
+.share-placeholder:disabled{opacity:1;cursor:default}
+.report-intro{margin:10px 3px 12px}
+.report-intro h2{margin:0;font-size:22px;line-height:1.2;font-weight:810}
+.report-intro p,.report-hint{margin:5px 0 0;font-size:12px;color:#a7bdd4}
+#report .net{margin-bottom:9px}
+#report .tiles{margin-top:8px}
+.report-hint{margin:8px 3px 0}
+.bottom-nav{position:fixed;z-index:25;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 22px));min-height:65px;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:6px 7px;background:rgba(20,36,53,.92);border:1px solid rgba(190,219,249,.29);border-radius:24px;box-shadow:0 9px 35px rgba(0,7,19,.45),inset 0 1px 0 rgba(240,250,255,.13);-webkit-backdrop-filter:blur(22px) saturate(135%);backdrop-filter:blur(22px) saturate(135%)}
+.bottom-nav-item{min-height:52px;border:0;background:transparent;border-radius:17px;color:#a9bfd6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;font-weight:710}
+.bottom-nav-item.active{background:rgba(98,157,228,.20);color:#e9f5ff}
+.bottom-nav-item .nav-icon{font-size:23px;line-height:1.1;font-weight:650}
+@media(max-width:360px){.tile.home-kpi{min-height:159px;padding:13px 10px}.home-kpi-label{font-size:15px!important}.tile.home-kpi strong{font-size:clamp(18px,5.8vw,23px)}.quick-add-btn{font-size:12px;padding:6px}.home-kpi small{font-size:10.5px}}
+@media(prefers-reduced-transparency:reduce){.bottom-nav{background:#15263a}}
+
+.analytics-planned{padding:22px 17px;min-height:205px;border-radius:23px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:9px}
+.analytics-planned-icon{display:flex;align-items:center;justify-content:center;font-size:31px;line-height:1;width:58px;height:58px;color:#a4cfff;background:rgba(92,149,215,.16);border-radius:17px}
+.analytics-planned h3{margin:0;font-size:18px;font-weight:760}
+.analytics-planned p{margin:0;color:#b3c9dc;font-size:13px;line-height:1.45;max-width:320px}
+.analytics-planned .analytics-planned-note{font-size:11.5px;color:#839cb5}
+.bottom-nav-item{font-size:10.5px}
+@media(max-width:360px){.bottom-nav-item{font-size:10px}}
+
+/* Connections screen concept: visible only under More, never collects credentials. */
+.more-menu{margin:13px 0 14px}
+.more-login-entry{display:flex;align-items:center;gap:12px;text-align:left;width:100%;min-height:82px;padding:12px 15px;border-radius:24px;border:1px solid rgba(173,211,250,.35);background:linear-gradient(145deg,rgba(51,91,132,.40),rgba(25,44,66,.9));color:#f3f8ff;box-shadow:inset 0 1px 0 rgba(236,247,255,.15)}
+.more-login-icon{display:flex;align-items:center;justify-content:center;flex:0 0 45px;height:45px;border-radius:14px;background:rgba(117,184,252,.18);font-size:28px;color:#c8e5ff}
+.more-login-text{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.more-login-text strong{font-size:17px;line-height:1.2;font-weight:760}
+.more-login-text small{font-size:12px;color:#b1c9dd}
+.more-login-arrow{color:#c5def1;font-size:30px}
+.more-subhead{font-size:13px;color:#97b0c8;font-weight:730;margin:8px 4px}
+.connect-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:16px 5px 10px}
+.connect-heading strong{font-size:15px}.connect-heading small{font-size:11px;color:#99b0c9}
+.connect-list{display:grid;gap:11px}
+.connect-card{display:flex;align-items:center;gap:11px;min-height:96px;padding:12px;border-radius:22px;border:1px solid rgba(176,210,245,.29);background:linear-gradient(155deg,rgba(58,92,129,.35),rgba(24,39,58,.91));box-shadow:inset 0 1px 0 rgba(240,249,255,.1)}
+.connect-logo{width:43px;height:43px;border-radius:14px;display:flex;flex:0 0 43px;align-items:center;justify-content:center;font-size:22px;font-weight:860;background:#294f79;color:#f4f9ff}
+.connect-logo.yandex{background:#db493e;color:#fff}
+.connect-logo.apark{background:#315d96;color:#fff}
+.connect-logo.google{background:#e9eef7;color:#3d6db0}
+.connect-main{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.connect-main strong{font-size:14px;line-height:1.2}
+.connect-main small{font-size:11px;color:#b8cbe0;line-height:1.3}
+.connect-state{font-size:10.5px;color:#91a7bc;line-height:1.2;margin-top:3px}
+.connect-action{border:1px solid rgba(159,190,221,.24);background:rgba(58,80,108,.35);color:#a6b9cb;border-radius:999px;font-size:12px;font-weight:720;min-width:65px;height:37px;padding:5px 8px;cursor:not-allowed}
+.connect-action:disabled{opacity:1}
+@media(max-width:360px){.connect-card{gap:7px;padding:9px}.connect-logo{width:38px;height:38px;flex-basis:38px}.connect-action{min-width:59px;padding:5px}.connect-main strong{font-size:12.5px}}
+
+/* Status previews: Auth and sync are deliberately separate signals.
+   All visible states in the public demo are examples, never live checks. */
+.status-dot{display:inline-block;width:9px;height:9px;min-width:9px;flex:0 0 9px;border-radius:50%;background:#8093a9;box-shadow:0 0 0 2px rgba(128,147,169,.14)}
+.status-dot.ok{background:#4ddb93;box-shadow:0 0 0 2px rgba(77,219,147,.18)}
+.status-dot.error{background:#ff6b70;box-shadow:0 0 0 2px rgba(255,107,112,.17)}
+.status-dot.warning{background:#ffca65;box-shadow:0 0 0 2px rgba(255,202,101,.18)}
+.status-dot.unknown{background:#879ab0}
+.more-service-label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:15px 3px 8px;font-size:13px;color:#d9eafa;font-weight:700}
+.more-service-label span{font-size:10px;color:#9db1c9;font-weight:550}
+.more-service-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.more-service-chip{padding:8px 5px 7px;min-height:73px;border-radius:17px;background:rgba(28,50,75,.72);border:1px solid rgba(157,198,235,.22);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#cbdff2;font-size:11px;font-weight:650}
+.chip-icon-wrap{position:relative;display:inline-flex}
+.chip-icon-wrap .status-dot{position:absolute;right:-4px;bottom:-2px;width:11px;height:11px;border:2px solid #21364d;box-shadow:none}
+.connect-logo.compact{width:32px;height:32px;flex:0 0 32px;border-radius:10px;font-size:17px}
+.more-status-disclaimer{margin:9px 4px 0;font-size:11px;color:#91a8be;line-height:1.4}
+.connect-demo-notice{margin-top:12px;padding:10px 13px;border-radius:14px;border:1px solid rgba(158,191,226,.28);background:rgba(32,54,78,.55);font-size:12px;color:#c4d7ea;line-height:1.35}
+.connect-card{align-items:flex-start;gap:10px;padding:13px 11px;min-height:142px}
+.connect-main{gap:6px}
+.connect-provider-head{display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap}
+.connect-provider-head>strong{font-size:14px;line-height:1.2}
+.connect-overall{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:760;white-space:nowrap;color:#c3d6e9}
+.connect-overall.ok{color:#91e9b8}
+.connect-overall.error{color:#ffafb3}
+.connect-overall.warning{color:#ffda90}
+.connect-signal-list{display:flex;align-items:flex-start;gap:5px;flex-wrap:wrap;margin-top:4px}
+.connect-signal{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border-radius:999px;border:1px solid rgba(169,199,226,.17);background:rgba(14,28,46,.41);font-size:10px;line-height:1.1;white-space:nowrap;color:#d6e3f0}
+.connect-signal .status-dot,.connect-overall .status-dot{width:7px;height:7px;min-width:7px;flex-basis:7px}
+.connect-explanation{margin:3px 0 0;font-size:11px;line-height:1.35;color:#a4bad0}
+.connect-action{align-self:center}
+.connect-legend{display:flex;flex-wrap:wrap;gap:8px 12px;margin:14px 3px;font-size:11px;color:#b2c7dc}
+.connect-legend>span{display:inline-flex;align-items:center;gap:6px}
+@media(max-width:375px){.connect-card{gap:7px;padding:10px 8px}.connect-provider-head>strong{font-size:13px}.connect-overall{font-size:9.5px}.connect-signal{font-size:9.5px;padding:4px 5px}.connect-logo:not(.compact){width:37px;height:37px;flex-basis:37px;font-size:19px}.connect-action{min-width:55px;padding:5px;font-size:11px}}
+
+/* Only for public demonstration of connection fault scenarios. */
+.demo-scenario-label{display:flex;flex-direction:column;gap:5px;margin-top:9px;font-size:10.5px;color:#a9bfd3;font-weight:650}
+.demo-scenario-picker{width:100%;min-width:0;max-width:100%;min-height:39px;border-radius:12px;border:1px solid rgba(167,202,238,.32);padding:6px 8px;background:#203952;color:#eaf5ff;font-size:12px;font-weight:620}
+.demo-scenario-picker:focus-visible{outline:2px solid #8cc3ff;outline-offset:2px}
+
+/* Mock sign-in is deliberately non-interactive: not a credential form. */
+.login-preview-open{width:100%;min-height:34px;margin-top:8px;border-radius:11px;border:1px solid rgba(166,200,231,.28);background:rgba(80,123,175,.15);color:#d3e9ff;font-size:11.5px;font-weight:680}
+.login-mockup{margin-top:13px;border:1px solid rgba(174,206,245,.34);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(150deg,rgba(43,75,109,.68),rgba(19,35,52,.93))}
+.login-mockup-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.login-mockup-head>span{display:flex;align-items:center;gap:9px;min-width:0}
+.login-mockup-head strong{font-size:15px;line-height:1.3}
+.login-mockup-head>button{min-width:38px;min-height:38px;border-radius:50%;border:1px solid rgba(160,203,243,.28);background:#29435e;color:#e4f4ff}
+.login-mockup-notice{margin:0;color:#a9c4d9;font-size:12px;line-height:1.4}
+.login-mockup-fields{display:flex;flex-direction:column;gap:10px}
+.login-mockup-fields>label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:680;color:#d3e6fa}
+.login-mockup-fields input{width:100%;min-height:45px;padding:9px 12px;border-radius:14px;border:1px solid rgba(157,190,218,.30);background:rgba(10,23,36,.6);color:#acc2d6;font-size:14px;opacity:1}
+.login-mockup-fields input:disabled{opacity:.65;cursor:not-allowed;-webkit-text-fill-color:#a6bfd5}
+.login-mockup-submit{width:100%;min-height:44px;border:1px solid rgba(149,177,204,.27);border-radius:14px;background:rgba(70,102,136,.35);font-size:14px;font-weight:760;color:#a0b9cf;opacity:1;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header" id="appHeader">
+  <div class="header-main">
+   <button class="back header-back" id="backHome" type="button" aria-label="Вернуться на главную" hidden><span aria-hidden="true">‹</span> Назад</button>
+   <div id="homeBrand"><h1 class="brand-lockup"><span class="brand-text"><span class="brand-taxi">Taxi</span><span class="brand-check">Check</span></span><img class="brand-car" alt="" aria-hidden="true" width="38" height="38" decoding="async" loading="eager" src="data:image/webp;base64,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"></h1><div class="demo-tag">ПУБЛИЧНОЕ ДЕМО · ВСЕ ЦИФРЫ ВЫМЫШЛЕНЫ</div></div>
+   <h2 class="header-detail-title" id="detailTitle" hidden>Касса</h2>
+  </div>
+  <button class="gear" id="gear" title="Настройки" aria-label="Настройки"><span aria-hidden="true">⚙</span></button>
+ </header>
+
+ <section class="panel period-panel" id="periodPanel">
+  <p class="period-editor-title">Период по Москве</p>
+  <p class="period-help">Даты и время относятся к операциям Апарка (appliedAt), а не к подтверждённой рабочей смене.</p>
+  <form id="periodForm">
+   <div class="period-group">
+    <label class="field-wrap"><span class="field-caption">С даты</span><input type="date" id="from" min="2026-10-14" required></label>
+    <label class="field-wrap"><span class="field-caption">Со времени (необязательно)</span><input type="time" id="timeFrom"></label>
+   </div>
+   <div class="period-group">
+    <label class="field-wrap"><span class="field-caption">По дату</span><input type="date" id="to" min="2026-10-14" required></label>
+    <label class="field-wrap"><span class="field-caption">До времени (необязательно)</span><input type="time" id="timeTo"></label>
+   </div>
+   <button type="submit" class="period-submit" id="periodShow">Показать</button>
+  </form>
+  <p class="period-help">Если время окончания пустое, включается весь последний день. При указанном времени конец интервала не включается.</p>
+ </section>
+ <div class="mini-note" id="globalNotice" role="status" aria-live="polite">Публичный макет. Все цифры вымышлены. Никаких подключений к Google или Апарк.</div>
+<main id="home">
+  <section class="home-kpis" aria-label="Итог выбранной смены">
+   <button class="tile home-kpi home-kpi-cash" data-screen="cash" type="button"><span class="home-kpi-label">Касса</span><strong id="homeCashValue">—</strong><small id="homeCashCaption">После комиссий</small></button>
+   <button class="tile home-kpi home-kpi-net" data-screen="earnings" type="button"><span class="home-kpi-label">Чистыми</span><strong id="homeNetValue">—</strong><small id="homeNetCaption">После расходов</small></button>
+  </section>
+  <section class="home-quick" aria-label="Быстрый ввод">
+   <div class="home-quick-actions"><button type="button" class="quick-add-btn" disabled title="Запись появится после подключения безопасного редактора">＋ Наличный заказ · скоро</button><button type="button" class="quick-add-btn" disabled title="Запись появится после подключения безопасного редактора">⛽ Заправка · скоро</button></div>
+   <p class="period-help">Ручной ввод подключим после проверки чтения и правил записей. Никаких локальных «сохранено», которые пропадают после обновления.</p>
+  </section>
+  <button class="share-placeholder" type="button" id="sharePreview" disabled aria-label="Поделиться результатом, скоро"><span aria-hidden="true">↗</span> Поделиться результатом <small>скоро</small></button>
+ </main>
+<main id="report" hidden>
+  <div class="report-intro"><h2>Отчёт за период</h2><p>Все показатели и подробности смены</p></div>
+  <section class="panel net" id="netCard" role="button" tabindex="0"><div><div class="net-caption">Чистый заработок</div><div class="net-figure"><strong class="net-num" id="netNum">—</strong><button class="net-alert" id="netAlert" title="Почему предварительно">!</button></div><p class="net-note" id="netSub">Предварительно</p></div><div class="work-summary"><span>Рабочее время</span><strong id="workValue">—</strong><span>Чистыми в час</span><strong id="hourValue">—</strong><button id="workButton">Изменить</button></div></section>
+  <div class="tiles" id="tileGrid">
+   <button class="tile tile-finance tile-cash" data-screen="cash"><span class="tile-finance-heading">Касса</span><div class="tile-cash-body"><div class="tile-cash-line"><small class="cash-caption">До комиссий</small><strong id="tileGross" class="cash-amount cash-gross">—</strong></div><div class="tile-cash-line"><small class="cash-caption" id="tileCashMeta">После комиссий</small><strong id="tileCash" class="cash-amount green">—</strong></div></div></button>
+   <button class="tile tile-finance tile-commissions" data-screen="commissions"><span class="tile-finance-heading">Комиссии</span><div class="tile-finance-body"><small class="tile-meta">Всего удержано</small><strong id="tileCommissions" class="red">—</strong><div class="tile-commission-breakdown" id="tileCommissionSplit"><span id="tileCommissionOrders">За заказы —</span><span id="tileCommissionOther">НДС и прочее —</span></div></div></button>
+   <button class="tile tile-finance tile-rent" data-screen="rent"><span class="tile-finance-heading">Аренда</span><div class="tile-rent-body"><strong id="tileRent">—</strong><div class="tile-rent-breakdown" id="tileRentSplit"><span id="tileRentBonus">Бонусами —</span><span id="tileRentMain">Деньгами —</span></div></div></button>
+   <button class="tile tile-finance tile-fuel" data-screen="fuel"><span class="tile-finance-heading">Заправки</span><div class="tile-value-group"><strong id="tileFuel">—</strong><small class="tile-meta" id="tileFuelMeta">Нет данных</small></div></button>
+   <button class="tile" data-screen="other"><span>Прочие расходы</span><div class="tile-value-group"><strong id="tileOther">—</strong><small class="tile-meta" id="tileOtherMeta">Нет данных</small></div></button>
+   <button class="tile" data-screen="bonuses"><span>Бонусы</span><div class="tile-value-group"><strong id="tileBonuses" class="blue">—</strong><small class="tile-meta">Покрытие аренды бонусами, не доход</small></div></button>
+   <button class="tile" data-screen="mileage"><span>Пробег</span><div class="tile-value-group"><strong id="tileMileage">—</strong><small class="tile-meta" id="tileMileageMeta">Пробег смены · демо</small></div></button>
+   <button class="tile" data-screen="consumption"><span>Расход авто</span><div class="tile-value-group"><strong id="tileConsumption">—</strong><small class="tile-meta">Накопительный · демо</small></div></button>
+  </div>
+  <p class="report-hint">Нажмите на плитку для детализации. Данные предварительные; ручные изменения пока выключены.</p>
+ </main>
+<main id="analytics" hidden>
+  <div class="report-intro"><h2>Аналитика</h2><p>Графики и закономерности работы</p></div>
+  <section class="panel analytics-planned"><span class="analytics-planned-icon" aria-hidden="true">◫</span><h3>Графики появятся здесь</h3><p>После подключения истории операций можно будет посмотреть распределение кассы, комиссии по категориям и заработок по часам.</p><p class="analytics-planned-note">Время проведения операции не всегда совпадает со временем заказа: почасовая статистика будет оценочной.</p></section>
+ </main>
+<main id="detail" hidden>
+  
+  <div class="panel detail-hero" id="detailHero"><div class="hero-caption" id="heroCaption">Касса</div><div class="hero-total" id="heroTotal">—</div><p class="hero-help" id="heroHelp"></p></div>
+  <div id="detailContent"></div>
+ </main>
+ <button class="big-button" type="button" id="refreshBtn" hidden>Обновить</button>
+ <button class="sync-line" type="button" id="syncStatus" hidden>Публичное демо · без подключения к реальным данным</button>
+</div>
+<nav class="bottom-nav" id="bottomNav" aria-label="Навигация по приложению">
+ <button type="button" class="bottom-nav-item active" data-nav="home" aria-current="page"><span class="nav-icon" aria-hidden="true">⌂</span><span>Главная</span></button>
+ <button type="button" class="bottom-nav-item" data-nav="report"><span class="nav-icon" aria-hidden="true">▤</span><span>Отчёт</span></button>
+ <button type="button" class="bottom-nav-item" data-nav="analytics"><span class="nav-icon" aria-hidden="true">▥</span><span>Аналитика</span></button>
+ <button type="button" class="bottom-nav-item" data-nav="settings"><span class="nav-icon" aria-hidden="true">☷</span><span>Ещё</span></button>
+</nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  // First integration stage: READ-ONLY. This file deliberately makes no mutation calls.
+  // The production workbook and Apark credentials are never accessed from the browser.
+  const $ = function (selector) { return document.querySelector(selector); };
+  const byId = function (id) { return document.getElementById(id); };
+  const screenTitles={cash:'Касса',earnings:'Чистый заработок',commissions:'Комиссии',
+    rent:'Аренда',fuel:'Заправки',other:'Прочие расходы',bonuses:'Бонусы',
+    mileage:'Пробег',consumption:'Расход автомобиля',settings:'Ещё',
+    work:'Рабочее время'};
+  let snapshot=null,screen='home',loading=false,generation=0;
+  function realMinor(v){return Number.isSafeInteger(v)?v:null;}
+  function rub(v) {
+    const n=realMinor(v);
+    return n===null?'Нет данных':(n/100).toLocaleString('ru-RU',
+      {minimumFractionDigits:2,maximumFractionDigits:2})+' ₽';
+  }
+  function km(v){return typeof v==='number'&&Number.isFinite(v)?v.toLocaleString('ru-RU',{maximumFractionDigits:2})+' км':'Нет данных';}
+  function hours(v){return Number.isSafeInteger(v)&&v>0?Math.floor(v/60)+' ч '+(v%60)+' мин':'Нет данных';}
+  function assign(id,value){const e=byId(id);if(e)e.textContent=String(value);}
+  function esc(s){return String(s===undefined||s===null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function call(method,arg){
+    if(method!=='taxiCheckV4Overview')return Promise.reject(new Error('В публичном макете серверные операции недоступны.'));
+    const period=arg||{};
+    const a=period.dateFrom||'2026-10-21',b=period.dateTo||a;
+    const order={key:'demo-order-1',occurredAt:a+' 17:20',category:'order_income',comment:'Пример заказа · демо',signedMinor:1112075};
+    const fee1={key:'demo-fee-1',occurredAt:a+' 17:22',categoryLabel:'Комиссия за заказы · демо',signedMinor:-160000};
+    return Promise.resolve({
+      status:'success',period:{from:a+' 00:00:00',to:b+' 23:59:59'},
+      v4:{
+        net:{amountMinor:652235,preliminary:true,reason:'ДЕМОНСТРАЦИЯ. Финансовые суммы вымышлены, подключений к настоящим источникам нет.',
+          components:[
+            {label:'Заказы · демо',count:1,amountMinor:1112075},
+            {label:'Комиссии · демо',count:1,amountMinor:-259840},
+            {label:'Аренда деньгами · демо',count:1,amountMinor:-200000}],
+          issues:[{code:'DEMO',message:'Это публичный макет. Никакие цифры не относятся к реальным сменам или финансовым операциям.'}]},
+        sections:{
+          cash:{amountMinor:1112075,apiGrossMinor:1112075,manualMinor:0,reason:'Вымышленные начисления в публичном демонстрационном интерфейсе.',operations:[order],records:[]},
+          commissions:{amountMinor:259840,reason:'Вымышленные удержания.',operations:[fee1],partner:{amountMinor:21840},
+            categories:[
+              {key:'yandex_commission',label:'Комиссия за заказы · демо',amountMinor:160000},
+              {key:'vat',label:'НДС · демо',amountMinor:43000},
+              {key:'movement_mode_cost',label:'Дополнительные удержания · демо',amountMinor:35000}]},
+          rent:{observedTotalMinor:310000,mainPaidMinor:200000,bonusCoveredMinor:110000,reason:'Вымышленная аренда. Бонусы не считаются дополнительным доходом.',
+            components:[{key:'base',label:'Аренда · демо',observedTotalMinor:310000}],operations:[]},
+          bonuses:{creditsMinor:110000,spentMinor:110000,operations:[]},
+          fuel:{amountMinor:0,records:[]},other:{amountMinor:0,records:[]},
+          mileage:{kilometres:null,records:[],reason:'Пробег не указан в демонстрации.'},
+          consumption:{litresPer100Km:null,reason:'Нет подтверждённого расхода топлива.'}
+        },
+        workTime:{minutes:null,hourlyMinor:null,reason:'Рабочее время в публичном макете не задано.'}
+      }
+    });
+  }
+  function currentDayMoscow(){
+    const pieces=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const get=function(k){return pieces.find(function(x){return x.type===k;}).value;};
+    return get('year')+'-'+get('month')+'-'+get('day');
+  }
+  function daysBetween(a,b){return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000)+1;}
+  function selectedPeriod(){
+    const a=byId('from').value,b=byId('to').value,t1=byId('timeFrom').value,t2=byId('timeTo').value,today=currentDayMoscow();
+    if(!a||!b||a<'2026-10-14'||b<a||b>today||daysBetween(a,b)>31)throw new Error('Выбери период с 14 октября по сегодня, максимум 31 день.');
+    if(a===b&&t1&&t2&&t2<=t1)throw new Error('Время окончания должно быть позже начала.');
+    return {dateFrom:a,dateTo:b,timeFrom:t1,timeTo:t2};
+  }
+  function setLoading(v){
+    loading=v;byId('periodShow').disabled=v;byId('refreshBtn').disabled=v;
+    if(v)assign('globalNotice','Открываем локальные демонстрационные данные…');
+  }
+  async function load(){
+    if(loading)return;
+    const p=selectedPeriod(),n=++generation;
+    setLoading(true);
+    snapshot=null;paint();
+    try{
+      const res=await call('taxiCheckV4Overview',p);
+      if(n!==generation)return;
+      if(!res||res.status!=='success'||!res.v4||!res.v4.sections||!res.v4.net)throw new Error('Сервер вернул неполную финансовую модель.');
+      snapshot=res;
+      const period=res.period||{};
+      assign('globalNotice','ПУБЛИЧНОЕ ДЕМО · '+(period.from||p.dateFrom)+' → '+(period.to||p.dateTo)+
+        ' · суммы вымышлены, сервер не подключён');
+      paint();
+    }catch(e){
+      assign('globalNotice','Не удалось получить реальные данные: '+String(e&&e.message||e).slice(0,250));
+      paint();
+    }finally{setLoading(false);}
+  }
+  function v4(){return snapshot&&snapshot.v4||null;}
+  function sections(){return v4()&&v4().sections||{};}
+  function knownAfterFees(){
+    const s=sections(),g=realMinor(s.cash&&s.cash.amountMinor),c=realMinor(s.commissions&&s.commissions.amountMinor);
+    return g===null||c===null?null:g-c;
+  }
+  function safeNotes(){
+    const net=v4()&&v4().net;
+    return net&&Array.isArray(net.issues)?net.issues:[];
+  }
+  function paint(){
+    const v=v4(),s=sections(),net=realMinor(v&&v.net&&v.net.amountMinor),
+      cash=s.cash||{},fees=s.commissions||{},rent=s.rent||{},bonuses=s.bonuses||{},
+      fuel=s.fuel||{},other=s.other||{},mileage=s.mileage||{},work=v&&v.workTime||{};
+    assign('homeCashValue',rub(knownAfterFees()));
+    assign('homeCashCaption','Начисления MAIN после известных комиссий · не касса смены');
+    assign('homeNetValue',rub(net));
+    assign('homeNetCaption',v?'Предварительно · по известным операциям':'Нет подтверждённых данных');
+    assign('netNum',rub(net));
+    assign('netSub',v?'Предварительно · полнота источников не подтверждена':'Нет данных');
+    byId('netAlert').hidden=!v;
+    assign('workValue',hours(work.minutes));
+    assign('hourValue',rub(work.hourlyMinor));
+    assign('tileGross',rub(cash.amountMinor));
+    assign('tileCash',rub(knownAfterFees()));
+    assign('tileCashMeta','Известные комиссии вычтены · не касса смены');
+    assign('tileCommissions',rub(fees.amountMinor));
+    const cs=Array.isArray(fees.categories)?fees.categories:[],order=cs.find(function(x){return x.key==='yandex_commission';});
+    assign('tileCommissionOrders','За заказы '+rub(order&&order.amountMinor));
+    assign('tileCommissionOther','НДС и другие категории · см. детализацию');
+    byId('tileCommissionSplit').hidden=!v;
+    assign('tileRent',rub(rent.observedTotalMinor));
+    assign('tileRentBonus','Бонусами '+rub(rent.bonusCoveredMinor));
+    assign('tileRentMain','Деньгами '+rub(rent.mainPaidMinor));
+    assign('tileBonuses',rub(rent.bonusCoveredMinor));
+    assign('tileFuel',Array.isArray(fuel.records)&&fuel.records.length?rub(fuel.amountMinor):'Нет записей');
+    assign('tileFuelMeta','Покупки топлива, не фактический расход');
+    assign('tileOther',Array.isArray(other.records)&&other.records.length?rub(other.amountMinor):'Нет записей');
+    assign('tileOtherMeta','Полнота расходов не подтверждена');
+    assign('tileMileage',km(mileage.kilometres));
+    assign('tileMileageMeta','Не распределён по часам без границ смен');
+    assign('tileConsumption','Нет данных');
+    if(screen!=='home'&&screen!=='report'&&screen!=='analytics')paintDetail();
+  }
+  function infoRow(label,value){
+    return '<div class="detail-row"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>';
+  }
+  function itemList(items,type){
+    if(!Array.isArray(items)||!items.length)return '<p class="period-help">Подтверждённых записей этого типа за период не найдено.</p>';
+    return '<div class="panel">'+items.slice(0,200).map(function(x){
+      const time=String(x.occurredAt||x.day||x.endDay||'').slice(0,19);
+      const label=type==='commission'?x.categoryLabel||x.category||'Удержание':
+        type==='rent'?x.rentComponent||x.category||'Аренда':x.comment||x.title||x.type||'Запись';
+      const amount=type==='commission'||type==='rent'?rub(x.signedMinor):rub(x.amountMinor);
+      const sub=type==='mileage'?km(x.tripKm):amount;
+      return '<div class="detail-row"><span>'+esc(time)+' · '+esc(label)+'</span><strong>'+esc(sub)+'</strong></div>';
+    }).join('')+(items.length>200?'<p class="period-help">Показаны первые 200 записей.</p>':'')+'</div>';
+  }
+  function paintDetail(){
+    const s=sections(),v=v4(),title=screenTitles[screen]||'TaxiCheck';
+    assign('detailTitle',title);assign('heroCaption',title);
+    let amount=null,help='Все данные вымышлены для демонстрации внешнего вида. Реальные финансовые системы не подключены.';
+    let content='';
+    if(screen==='cash'){
+      const c=s.cash||{};amount=c.amountMinor;help=c.reason||help;
+      content=infoRow('Начисления за заказы MAIN',rub(c.apiGrossMinor))+
+        infoRow('Самостоятельные наличные',Array.isArray(c.records)&&c.records.length?rub(c.manualMinor):'Нет записей')+
+        itemList(c.operations,'cash')+itemList(c.records,'manual');
+    }else if(screen==='commissions'){
+      const c=s.commissions||{};amount=c.amountMinor;help=c.reason||help;
+      content=(c.categories||[]).map(function(x){return infoRow(x.label||x.key,rub(x.amountMinor));}).join('')+
+        infoRow('Комиссия партнёра',rub(c.partner&&c.partner.amountMinor))+
+        itemList(c.operations,'commission');
+    }else if(screen==='rent'){
+      const r=s.rent||{};amount=r.observedTotalMinor;help=r.reason||help;
+      content=infoRow('Денежная часть аренды (MAIN)',rub(r.mainPaidMinor))+
+        infoRow('Покрытие бонусным балансом',rub(r.bonusCoveredMinor))+
+        (r.components||[]).map(function(x){return infoRow(x.label||x.key,rub(x.observedTotalMinor));}).join('')+
+        itemList(r.operations,'rent');
+    }else if(screen==='bonuses'){
+      const b=s.bonuses||{},r=s.rent||{};amount=r.bonusCoveredMinor;
+      help='Бонусы покрывают часть аренды и не прибавляются второй раз к прибыли.';
+      content=infoRow('Покрыто бонусами',rub(r.bonusCoveredMinor))+
+        infoRow('Начислено на бонусный баланс',rub(b.creditsMinor))+
+        infoRow('Списано с бонусного баланса',rub(b.spentMinor))+
+        itemList(b.operations,'rent');
+    }else if(screen==='fuel'||screen==='other'){
+      const c=s[screen]||{};amount=Array.isArray(c.records)&&c.records.length?c.amountMinor:null;
+      help='Показаны только внесённые записи; отсутствие записей не означает нулевые расходы.';
+      content=itemList(c.records,'manual');
+    }else if(screen==='mileage'){
+      const m=s.mileage||{};help=m.reason||'Пробег по выбранному периоду не распределён.';
+      content='<p class="period-help">Записи Trip могут относиться к сменам, пересекающим полночь.</p>'+itemList(m.records,'mileage');
+    }else if(screen==='earnings'){
+      amount=v&&v.net&&v.net.amountMinor;help=v&&v.net&&v.net.reason||help;
+      content=(v&&v.net&&v.net.components||[]).map(function(x){
+        return infoRow(x.label,x.count>0?rub(x.amountMinor):'Нет подтверждённых записей');
+      }).join('')+'<h3>Что требует сверки</h3>'+
+      (safeNotes().map(function(x){return '<p class="period-help">'+esc(x.message||x.code)+'</p>';}).join('')||'<p class="period-help">Полнота источников не подтверждена.</p>');
+    }else if(screen==='work'){
+      const w=v&&v.workTime||{};amount=w.hourlyMinor;help=w.reason||'Нет подтверждённого рабочего времени.';
+      content=infoRow('Подтверждённое время',hours(w.minutes))+
+        infoRow('Заработок в час',rub(w.hourlyMinor));
+    }else if(screen==='settings'){
+      help='Публичный макет без доступа к реальным финансовым данным. Редактирование не подключено.';
+      content='<p class="panel">Это публичная демонстрация внешнего вида TaxiCheck. Суммы и записи вымышлены. Доступа к финансовым системам, API и Google Apps Script нет.</p>';
+    }else if(screen==='consumption'){
+      help=s.consumption&&s.consumption.reason||'Недостаточно данных для расчёта расхода топлива.';
+      content='<p class="panel">Заправленный объём не равен израсходованному. Без подтверждения начального и конечного топлива расход не рассчитываем.</p>';
+    }
+    assign('heroTotal',screen==='work'?rub(amount):screen==='mileage'||screen==='consumption'||screen==='settings'?'Нет данных':rub(amount));
+    assign('heroHelp',help);
+    byId('detailContent').innerHTML=content;
+  }
+  function navigate(dest){
+    screen=dest in screenTitles||['home','report','analytics'].includes(dest)?dest:'settings';
+    for(const id of ['home','report','analytics','detail'])byId(id).hidden=(id===(['home','report','analytics'].includes(screen)?screen:'detail'))?false:true;
+    const basic=['home','report','analytics'].includes(screen);
+    byId('homeBrand').hidden=screen!=='home';byId('detailTitle').hidden=screen==='home';
+    byId('backHome').hidden=basic;
+    byId('gear').hidden=screen!=='home';
+    byId('refreshBtn').hidden=screen!=='report';
+    byId('syncStatus').hidden=screen!=='report';
+    byId('appHeader').classList.toggle('detail-nav',screen!=='home');
+    assign('detailTitle',screen==='report'?'Отчёт':screen==='analytics'?'Аналитика':screenTitles[screen]||'Ещё');
+    document.querySelectorAll('[data-nav]').forEach(function(b){
+      const active=b.dataset.nav===screen||(b.dataset.nav==='settings'&&screen==='settings');
+      b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+    });
+    paint();
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('[data-screen]').forEach(function(b){b.addEventListener('click',function(){navigate(b.dataset.screen);});});
+  document.querySelectorAll('[data-nav]').forEach(function(b){b.addEventListener('click',function(){navigate(b.dataset.nav);});});
+  byId('gear').addEventListener('click',function(){navigate('settings');});
+  byId('backHome').addEventListener('click',function(){navigate('report');});
+  byId('netCard').addEventListener('click',function(e){if(!e.target.closest('button'))navigate('earnings');});
+  byId('netAlert').addEventListener('click',function(e){e.stopPropagation();navigate('earnings');});
+  byId('workButton').addEventListener('click',function(e){e.stopPropagation();navigate('work');});
+  byId('periodForm').addEventListener('submit',function(e){e.preventDefault();load().catch(function(e){assign('globalNotice',String(e.message||e));});});
+  byId('refreshBtn').addEventListener('click',function(){load().catch(function(e){assign('globalNotice',String(e.message||e));});});
+  byId('syncStatus').addEventListener('click',function(){navigate('settings');});
+  byId('syncStatus').textContent='Публичное демо · без подключения к реальным данным';
+  const today=currentDayMoscow();byId('from').value=today;byId('to').value=today;
+  paint();navigate('home');load().catch(function(e){assign('globalNotice',String(e.message||e));});
+})();
+</script>
+</body>
+</html>
