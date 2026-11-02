@@ -13,7 +13,9 @@
     if (!condition) throw new Error(code);
   }
   function amount(raw) {
-    const s = String(raw).replace(/[\u00a0\u202f\s₽]/g, '').replace(',', '.');
+    const compact = String(raw).replace(/[\u00a0\u202f\s₽]/g, '').replace(',', '.');
+    const match = compact.match(/-?\d+(?:\.\d{1,2})?/);
+    const s = match ? match[0] : '';
     const number = Number(s);
     assert(s && Number.isFinite(number), 'NOT_NUMERIC: '+String(raw).slice(0,24));
     return Math.round(number * 100);
