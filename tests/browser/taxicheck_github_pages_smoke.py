@@ -233,9 +233,8 @@ def test_settings_easter_egg(page):
             "Settings accessible name was lost")
     image = gear.locator("img.gear-icon-image")
     require(image.count() == 1, "User image did not replace gear")
-    require(image.get_attribute("src") ==
-            "https://cdn.wikimg.net/en/hkwiki/images/8/8e/Cogwork_Wheel.png",
-            "Settings must use the sourced original Cogwork Wheel PNG")
+    require(image.get_attribute("src") == "assets/cogwork-wheel.png",
+            "Settings must use the pinned original wiki PNG from this repository")
     image.evaluate("(img) => img.decode()")
     require(image.evaluate("(img) => img.complete && img.naturalWidth == 134 && img.naturalHeight == 133"),
             "Settings must display the original 134x133 wiki PNG, not a recreated icon")
