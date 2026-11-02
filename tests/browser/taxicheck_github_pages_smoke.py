@@ -498,6 +498,12 @@ def run_case(browser, width, height):
         )
 
         test_quick_entry(page)
+        page.locator('[data-nav="analytics"]').click()
+        require(page.locator("#analytics").is_visible(), "Analytics tab is not accessible")
+        require(page.locator("#report").is_hidden(), "Report should not overlap analytics")
+        require("Графики появятся" in page.locator("#analytics").inner_text(),
+                "Analytics should be an honest placeholder, not invented chart data")
+        no_overflow(page, "analytics placeholder")
         page.locator('[data-nav="report"]').click()
         require(page.locator("#report").is_visible(), "Report tab didn't open")
         require(page.locator("#netCard").is_visible(), "Hourly metrics missing from report")
