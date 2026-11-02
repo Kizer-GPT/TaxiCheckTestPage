@@ -348,20 +348,43 @@ def test_settings_easter_egg(page):
             "Tapping new icon did not open More menu")
     require(page.locator("#qaDetails").count() == 1,
             "QA settings content missing")
+    chips = page.locator(".more-service-chip")
+    require(chips.count() == 3, "More must show three compact connection indicators")
+    require("демонстрация" in page.locator(".more-service-label").inner_text().lower(),
+            "Connection status summary must be explicitly labelled demo")
+    # Status dots must be visible next to three service symbols even before opening detail.
+    dots = chips.locator(".status-dot")
+    require(dots.count() == 3, "Three summary status dots missing")
+    for state in ("ok", "error", "warning"):
+        require(chips.locator(f".status-dot.{state}").count() == 1,
+                f"Summary lacks demonstration state {state}")
     page.locator("#openConnections").click()
     require(page.locator("#detailTitle").inner_text() == "Вход и подключения",
             "Connections menu not opened")
     providers = page.locator(".connect-card")
     require(providers.count() == 3, "Expected three connection providers")
-    for name in ("Яндекс Про", "Апарк. Водитель", "Google · Gmail"):
-        card = providers.filter(has_text=name)
-        require(card.count() == 1, f"Missing connection option: {name}")
+    for key, name, state, auth, sync in (
+        ("yandex", "Яндекс Про", "ok", "ok", "ok"),
+        ("apark", "Апарк. Водитель", "error", "error", "unknown"),
+        ("gmail", "Google · Gmail", "warning", "ok", "warning"),
+    ):
+        card = page.locator(f'.connect-card[data-provider="{key}"]')
+        require(card.count() == 1 and name in card.inner_text(),
+                f"Missing connection option: {name}")
         require(card.locator("button.connect-action").is_disabled(),
                 f"Authentication for {name} must NOT be active in the demo")
-        require("Не подключено в демо" in card.inner_text(),
-                f"{name} must not pretend to be connected")
+        require(card.locator(f".connect-overall.{state} .status-dot.{state}").count() == 1,
+                f"{name}: missing overall state {state}")
+        require(card.locator(f".connect-signal.{auth} .status-dot.{auth}").count() >= 1,
+                f"{name}: missing authentication state {auth}")
+        require(card.locator(f".connect-signal.{sync} .status-dot.{sync}").count() >= 1,
+                f"{name}: missing synchronization state {sync}")
+    require("ДЕМО" in page.locator(".connect-demo-notice").inner_text(),
+            "Fictional statuses are not declared as demo data")
     require(page.locator("input[type=password]").count() == 0,
             "Public mock must not request passwords")
+    require(page.locator('input[name*="token"]').count() == 0,
+            "Public mock must not request tokens")
     no_overflow(page, "connections")
     page.locator("#backHome").click()
     require(page.locator("#detailTitle").inner_text() == "Ещё",
