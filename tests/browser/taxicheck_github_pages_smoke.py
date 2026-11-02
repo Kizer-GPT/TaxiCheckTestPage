@@ -225,6 +225,34 @@ def test_demo_forms(page):
             f"Net not restored after deleting demo expense: {restored}")
 
 
+def test_settings_easter_egg(page):
+    """User-provided turbine image replaces gear with unchanged tappable settings."""
+    gear = page.locator("#gear")
+    require(gear.is_visible(), "Settings control is not visible")
+    require(gear.get_attribute("aria-label") == "Настройки",
+            "Settings accessible name was lost")
+    image = gear.locator("img.gear-icon-image")
+    require(image.count() == 1, "User image did not replace gear")
+    require(image.get_attribute("src").startswith("data:image/webp;base64,"),
+            "Expected the original user image as embedded WebP")
+    require(image.evaluate("(img) => img.complete && img.naturalWidth > 0"),
+            "Settings Easter egg failed to decode")
+    sizes = gear.evaluate("""el => {
+      const a=el.getBoundingClientRect(), b=el.querySelector('img').getBoundingClientRect();
+      return {width:a.width,height:a.height,iconWidth:b.width,iconHeight:b.height};
+    }""")
+    require(abs(sizes["width"]-44)<1 and abs(sizes["height"]-44)<1,
+            f"Settings tap target changed: {sizes}")
+    require(sizes["iconWidth"]<=36 and sizes["iconHeight"]<=36,
+            f"Settings icon too large: {sizes}")
+    gear.click()
+    require(page.locator("#detailTitle").inner_text() == "Настройки",
+            "Tapping new icon did not open settings")
+    require(page.locator("#qaDetails").count() == 1,
+            "QA settings content missing")
+    page.locator("#backHome").click()
+
+
 def test_qa_persistence(page):
     """Manual QA must persist per browser and reset only via its own control."""
     page.locator("#gear").click()
@@ -337,6 +365,7 @@ def run_case(browser, width, height):
                 "Missing synthetic-data notice")
         no_overflow(page, "home")
         test_one_screen_dashboard(page)
+        test_settings_easter_egg(page)
         logo = page.locator("#homeBrand .brand-lockup")
         require(logo.is_visible(), "TaxiCheck wordmark missing")
         require(logo.locator(".brand-taxi").inner_text() == "Taxi", "Taxi wordmark wrong")
