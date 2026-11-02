@@ -381,10 +381,57 @@ def test_settings_easter_egg(page):
                 f"{name}: missing synchronization state {sync}")
     require("ДЕМО" in page.locator(".connect-demo-notice").inner_text(),
             "Fictional statuses are not declared as demo data")
-    require(page.locator("input[type=password]").count() == 0,
-            "Public mock must not request passwords")
-    require(page.locator('input[name*="token"]').count() == 0,
-            "Public mock must not request tokens")
+    require(page.locator("#demoLoginPreview").count() == 0,
+            "Login preview must start collapsed")
+    for key, name in (
+        ("yandex", "Яндекс Про"),
+        ("apark", "Апарк. Водитель"),
+        ("gmail", "Google · Gmail"),
+    ):
+        page.locator(f'.connect-card[data-provider="{key}"] [data-preview-login]').click()
+        mock = page.locator("#demoLoginPreview")
+        require(mock.is_visible(), f"{name}: preview did not open")
+        require(name in mock.inner_text(), f"{name}: wrong provider title")
+        login = mock.locator("#mockLogin")
+        password = mock.locator("#mockPassword")
+        require(login.count() == 1 and password.count() == 1,
+                f"{name}: login/password preview missing")
+        require(login.is_disabled() and password.is_disabled(),
+                f"{name}: mock credentials must be disabled")
+        require(mock.locator(".login-mockup-submit").is_disabled(),
+                f"{name}: mock submit must be disabled")
+        require(login.input_value() == "" and password.input_value() == "",
+                f"{name}: mock credentials must start empty")
+        cannot_focus = mock.evaluate("""root => {
+          const a=root.querySelector('#mockLogin'), b=root.querySelector('#mockPassword');
+          a.focus();const first=document.activeElement!==a;
+          b.focus();const second=document.activeElement!==b;
+          return first && second && a.tabIndex===-1 && b.tabIndex===-1;
+        }""")
+        require(cannot_focus, f"{name}: disabled credential input gained focus")
+        require(page.locator('input[name*="token"]').count() == 0,
+                "Public prototype must not expose a token input")
+        page.locator("#closeDemoLoginPreview").click()
+        require(page.locator("#demoLoginPreview").count() == 0,
+                "Closing login preview should remove mock inputs")
+    # Statuses are independent: successful login does not imply working synchronization.
+    page.locator('[data-demo-service="yandex"]').select_option("reauth")
+    yandex = page.locator('.connect-card[data-provider="yandex"]')
+    require(yandex.locator(".connect-overall.error").count() == 1,
+            "Reauth scenario must turn overall status red")
+    page.locator('[data-demo-service="gmail"]').select_option("sync_error")
+    gmail = page.locator('.connect-card[data-provider="gmail"]')
+    require(gmail.locator(".connect-signal.ok").count() >= 1
+            and gmail.locator(".connect-overall.warning").count() == 1,
+            "Gmail auth must stay green while synchronization warns")
+    page.locator('[data-demo-service="apark"]').select_option("unknown")
+    require(page.locator('.connect-card[data-provider="apark"] .connect-overall.unknown').count() == 1,
+            "Unknown provider must show gray status")
+    page.locator('[data-demo-service="apark"]').select_option("ok")
+    require(page.locator('.connect-card[data-provider="apark"] .connect-overall.ok').count() == 1,
+            "Recovered provider must show green status")
+    require("ДЕМО" in page.locator(".connect-demo-notice").inner_text(),
+            "Fictional statuses not declared synthetic")
     no_overflow(page, "connections")
     page.locator("#backHome").click()
     require(page.locator("#detailTitle").inner_text() == "Ещё",
