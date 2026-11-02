@@ -86,6 +86,57 @@ def assert_shift(page, shift_id, start, start_time, end, end_time):
     no_overflow(page, f"{shift_id} dashboard")
 
 
+def test_one_screen_dashboard(page):
+    """Compact dashboard without tiny KPI fonts or broken shift controls."""
+    require(page.locator("#shiftEditToggle").is_visible(), "Shift editor shortcut missing")
+    require(not page.locator("#shiftEditContent").is_visible(),
+            "Expanded shift form must not occupy initial screen")
+    require(not page.locator("#shiftEditorPanel").is_visible(),
+            "Collapsed shift editor panel wastes space")
+    require(page.locator("#modeShifts").is_visible() and page.locator("#modeCustom").is_visible(),
+            "Period mode toggle missing")
+    chips = page.locator(".shift-chip")
+    require(chips.count() >= 5, "Shift ribbon was lost")
+    metrics = page.evaluate("""() => {
+      const rect = selector => {
+        const r = document.querySelector(selector).getBoundingClientRect();
+        const el = document.querySelector(selector);
+        return {top:r.top,bottom:r.bottom,height:r.height,
+          radius:getComputedStyle(el).borderTopLeftRadius};
+      };
+      return {viewport:window.innerHeight,header:rect('#appHeader'),
+        period:rect('#periodPanel'),net:rect('#netCard'),
+        grid:rect('#tileGrid'),last:rect('#tileGrid .tile:last-child'),
+        refresh:rect('#refreshBtn'),chip:rect('.shift-chip'),
+        font:getComputedStyle(document.querySelector('#tileCash')).fontSize};
+    }""")
+    print("DASHBOARD_FIT", page.viewport_size["width"], metrics, flush=True)
+    require(metrics["period"]["height"] <= 170,
+            f"Shift selector still too tall: {metrics}")
+    require(metrics["chip"]["height"] <= 52,
+            f"Shift chips not compact: {metrics}")
+    require(float(metrics["chip"]["radius"].replace("px", "")) >= 23,
+            "Shift cards must be oval pills")
+    require(metrics["last"]["bottom"] <= metrics["viewport"]+12,
+            f"All eight tiles should fit on a phone screen: {metrics}")
+    require(float(metrics["font"].replace("px", "")) >= 16,
+            "Financial figures shrank too far")
+    no_overflow(page, "one screen compact dashboard")
+    # Ensure switching view still works after moving the editor toggle.
+    page.locator("#modeCustom").click()
+    require(page.locator("#customModePanel").is_visible(),
+            "Custom period form inaccessible")
+    page.locator("#modeShifts").click()
+    require(page.locator("#shiftModePanel").is_visible(),
+            "Shift mode inaccessible")
+    page.locator("#shiftEditToggle").click()
+    require(page.locator("#shiftEditContent").is_visible(),
+            "Shift editor did not open from new shortcut")
+    page.locator("#shiftEditCancel").click()
+    require(not page.locator("#shiftEditorPanel").is_visible(),
+            "Shift editor remained visible after cancel")
+
+
 def test_cash_tile_compact(page):
     """Public demo: gross (yellow) = pre-fee; cash (green) = gross minus fees."""
     for shift in ("s22", "s20", "s21"):
@@ -285,6 +336,7 @@ def run_case(browser, width, height):
         require("вымышлены" in page.locator("#globalNotice").inner_text().lower(),
                 "Missing synthetic-data notice")
         no_overflow(page, "home")
+        test_one_screen_dashboard(page)
         logo = page.locator("#homeBrand .brand-lockup")
         require(logo.is_visible(), "TaxiCheck wordmark missing")
         require(logo.locator(".brand-taxi").inner_text() == "Taxi", "Taxi wordmark wrong")
