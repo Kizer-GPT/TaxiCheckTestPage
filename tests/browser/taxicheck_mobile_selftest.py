@@ -54,6 +54,8 @@ def smoke(browser, browser_name, viewport, base):
         page.goto(base, wait_until="load")
         assert page.locator("#tcAutoQa").count() == 0, "QA overlay leaked to normal demo"
         assert page.locator("#homeCashValue").inner_text().strip() not in ("", "—")
+        original_cash = page.locator("#homeCashValue").inner_text().strip()
+        original_net = page.locator("#homeNetValue").inner_text().strip()
         page.goto(base + "?qa=run", wait_until="load")
         page.wait_for_function(
             "() => window.TaxiCheckQaLastReport?.complete === true", timeout=60000
@@ -61,12 +63,6 @@ def smoke(browser, browser_name, viewport, base):
         report = page.evaluate("window.TaxiCheckQaLastReport")
         assert report["total"] >= 40, report
         assert page.locator("#tcQaResults li").count() == report["total"]
-        assert report["failed"] == 0, (
-            f"{browser_name} {viewport}: "
-            + page.locator("#tcQaResults").inner_text()
-        )
-        assert page.locator("#tcQaResults li[data-state=pass]").count() == report["total"]
-        assert "Успешно" in page.locator("#tcQaStatus").inner_text()
         screenshots = Path(os.environ.get("TAXICHECK_QA_ARTIFACT_DIR", "playwright-artifacts/mobile-selftest"))
         screenshots.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(screenshots / f"{browser_name}-{viewport}-selftest.png"), full_page=True)
@@ -75,9 +71,18 @@ def smoke(browser, browser_name, viewport, base):
             "report": report,
             "checks": page.locator("#tcQaResults li").all_inner_texts()
         }, ensure_ascii=False, indent=2), encoding="utf8")
+        assert report["failed"] == 0, (
+            f"{browser_name} {viewport}: "
+            + page.locator("#tcQaResults").inner_text()
+        )
+        assert page.locator("#tcQaResults li[data-state=pass]").count() == report["total"]
+        assert "Успешно" in page.locator("#tcQaStatus").inner_text()
+        assert page.locator('iframe[title="Временный макет для автоматической проверки"]').count() == 0
         assert page.locator("#tcQaCopy").is_enabled()
         assert page.locator("#tcQaShare").is_enabled()
         assert page.locator("#home").is_visible()
+        assert page.locator("#homeCashValue").inner_text().strip() == original_cash
+        assert page.locator("#homeNetValue").inner_text().strip() == original_net
         assert page.evaluate(
             "document.documentElement.scrollWidth <= window.innerWidth + 3"
         ), "Horizontal overflow"
