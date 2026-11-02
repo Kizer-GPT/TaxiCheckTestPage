@@ -163,7 +163,28 @@ def test_first_four_finance_tiles(page):
             f"First pair title misalignment: {positions}")
     require(abs(positions[2]["headingTop"]-positions[3]["headingTop"])<1,
             f"Second pair title misalignment: {positions}")
-    no_overflow(page, "first four KPI layout")
+    require(page.locator("#tileCommissionSplit").is_visible(),
+            "Commission breakdown missing for known sample shift")
+    fees = rubles(page.locator("#tileCommissions").inner_text())
+    order_line = page.locator("#tileCommissionOrders").inner_text()
+    other_line = page.locator("#tileCommissionOther").inner_text()
+    require(order_line.startswith("За заказы ") and other_line.startswith("НДС и прочее "),
+            "Commission split labels missing")
+    order = rubles(order_line.removeprefix("За заказы "))
+    other = rubles(other_line.removeprefix("НДС и прочее "))
+    require(abs(order + other - fees) < 0.011,
+            f"Commission categories do not add to total: {order} + {other} != {fees}")
+    require(page.locator("#tileCommissionOrders").evaluate("(x) => x.scrollWidth <= x.clientWidth + 1"),
+            "Orders commission text clipped")
+    require(page.locator("#tileCommissionOther").evaluate("(x) => x.scrollWidth <= x.clientWidth + 1"),
+            "Other commission text clipped")
+    totals = page.evaluate("""() => {
+      const y=id => document.querySelector(id).getBoundingClientRect().top;
+      return {rent:y('#tileRent'),fuel:y('#tileFuel')};
+    }""")
+    require(abs(totals["fuel"]-totals["rent"]) < 7,
+            f"Fuel amount is too far below rent amount: {totals}")
+        no_overflow(page, "first four KPI layout")
 
 
 def test_cash_tile_compact(page):
