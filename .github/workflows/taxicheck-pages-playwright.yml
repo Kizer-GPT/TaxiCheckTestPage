@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: taxicheck-public-demo-qa
+  group: taxicheck-public-demo-qa-20261102-layout
   cancel-in-progress: true
 
 jobs:
