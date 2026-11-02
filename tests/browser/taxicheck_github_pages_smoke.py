@@ -235,6 +235,7 @@ def test_settings_easter_egg(page):
     require(image.count() == 1, "User image did not replace gear")
     require(image.get_attribute("src") == "assets/cogwork-wheel.png",
             "Settings must use the pinned original wiki PNG from this repository")
+    # Test the repository asset rather than requesting a third-party image host.
     image.evaluate("(img) => img.decode()")
     require(image.evaluate("(img) => img.complete && img.naturalWidth == 134 && img.naturalHeight == 133"),
             "Settings must display the original 134x133 wiki PNG, not a recreated icon")
