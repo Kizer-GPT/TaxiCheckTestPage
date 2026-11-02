@@ -233,10 +233,12 @@ def test_settings_easter_egg(page):
             "Settings accessible name was lost")
     image = gear.locator("img.gear-icon-image")
     require(image.count() == 1, "User image did not replace gear")
-    require(image.get_attribute("src").startswith("data:image/webp;base64,"),
-            "Expected the original user image as embedded WebP")
-    require(image.evaluate("(img) => img.complete && img.naturalWidth > 0"),
-            "Settings Easter egg failed to decode")
+    require(image.get_attribute("src") ==
+            "https://cdn.wikimg.net/en/hkwiki/images/8/8e/Cogwork_Wheel.png",
+            "Settings must use the sourced original Cogwork Wheel PNG")
+    image.evaluate("(img) => img.decode()")
+    require(image.evaluate("(img) => img.complete && img.naturalWidth == 134 && img.naturalHeight == 133"),
+            "Settings must display the original 134x133 wiki PNG, not a recreated icon")
     sizes = gear.evaluate("""el => {
       const a=el.getBoundingClientRect(), b=el.querySelector('img').getBoundingClientRect();
       return {width:a.width,height:a.height,iconWidth:b.width,iconHeight:b.height};
