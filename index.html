@@ -301,7 +301,7 @@ body{
 
 /* Structured first four KPIs: consistent heading/divider, data anchored below.
    The bottom four tiles intentionally keep their previous layout. */
-.tile-finance{justify-content:space-between;gap:6px;padding:9px 11px}
+.tile.tile-finance{justify-content:space-between;gap:6px;padding:9px 11px}
 .tile-finance>.tile-finance-heading{display:block;align-self:stretch;font-size:14px;line-height:1.2;font-weight:740;padding-bottom:5px;border-bottom:1px solid rgba(195,218,244,.15)}
 .tile-finance .tile-finance-body{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;min-width:0}
 .tile-finance .tile-value-group,.tile-finance .tile-rent-body{justify-content:flex-end;gap:2px}
@@ -310,7 +310,7 @@ body{
 .tile-commissions .tile-finance-body>strong{line-height:1.18}
 .tile-cash.tile-finance{gap:5px}
 .tile-cash.tile-finance .tile-cash-body{gap:3px}
-@media(max-width:360px){.tile-finance{padding:8px 9px}.tile-finance>.tile-finance-heading{padding-bottom:4px}}
+@media(max-width:360px){.tile.tile-finance{padding:8px 9px}.tile-finance>.tile-finance-heading{padding-bottom:4px}}
 
 /* Mobile dashboard fit: compact without reducing KPI numerals or tap targets. */
 .visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
