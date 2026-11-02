@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'qa/mobile-selftest.js'
+      - 'qa/advanced-suite.js'
       - 'tests/browser/taxicheck_mobile_selftest.py'
       - '.github/workflows/taxicheck-mobile-selftest.yml'
   workflow_dispatch:
@@ -26,7 +27,9 @@ jobs:
         with:
           node-version: '22'
       - name: JavaScript syntax check
-        run: node --check qa/mobile-selftest.js
+        run: |
+          node --check qa/mobile-selftest.js
+          node --check qa/advanced-suite.js
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -37,3 +40,11 @@ jobs:
           python -m playwright install --with-deps chromium webkit
       - name: Test iPhone and Android-style viewports using LOCAL mockup only
         run: python tests/browser/taxicheck_mobile_selftest.py
+      - name: Upload synthetic mobile test reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taxicheck-mockup-mobile-qa
+          path: playwright-artifacts/mobile-selftest/
+          if-no-files-found: ignore
+          retention-days: 7
