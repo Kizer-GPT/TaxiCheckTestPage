@@ -28,7 +28,8 @@ jobs:
           import struct, pathlib, hashlib
           path = pathlib.Path("assets/cogwork-wheel.png")
           data = path.read_bytes()
-          assert data[:8] == b"\\x89PNG\\r\\n\\x1a\\n", "Not a valid PNG signature"
+          print("First 16 bytes:", repr(data[:16]), "file size:", len(data))
+          assert data[:8] == bytes.fromhex("89504e470d0a1a0a"), "Not a valid PNG signature"
           assert 100 < len(data) < 100_000, "Unexpected original icon size"
           assert struct.unpack(">II", data[16:24]) == (134, 133), "Wrong PNG dimensions"
           print("Source image: 134x133 PNG, bytes:", len(data))
