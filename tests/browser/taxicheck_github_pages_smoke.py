@@ -137,6 +137,35 @@ def test_one_screen_dashboard(page):
             "Shift editor remained visible after cancel")
 
 
+def test_first_four_finance_tiles(page):
+    """The first four cards have matching title alignment and deliberate hierarchy."""
+    cards = page.locator('#tileGrid > .tile')
+    require(cards.count() == 8, "Dashboard must retain all eight cards")
+    for index, name in enumerate(("Касса", "Комиссии", "Аренда", "Заправки")):
+        card = cards.nth(index)
+        require("tile-finance" in (card.get_attribute("class") or ""),
+                f"{name}: finance card structure absent")
+        heading = card.locator(":scope > .tile-finance-heading")
+        require(heading.count() == 1 and heading.inner_text() == name,
+                f"{name}: title is misplaced")
+        require(heading.evaluate("(x) => getComputedStyle(x).borderBottomStyle") == "solid",
+                f"{name}: heading separator missing")
+        require(card.evaluate("(x) => getComputedStyle(x).justifyContent") == "space-between",
+                f"{name}: content should be anchored, not floating in the middle")
+    for index in range(4, 8):
+        require("tile-finance" not in (cards.nth(index).get_attribute("class") or ""),
+                "Lower four cards must keep their existing layout")
+    positions = cards.evaluate_all("""els => els.slice(0,4).map(el => ({
+      cardTop: el.getBoundingClientRect().top,
+      headingTop: el.querySelector('.tile-finance-heading').getBoundingClientRect().top
+    }))""")
+    require(abs(positions[0]["headingTop"]-positions[1]["headingTop"])<1,
+            f"First pair title misalignment: {positions}")
+    require(abs(positions[2]["headingTop"]-positions[3]["headingTop"])<1,
+            f"Second pair title misalignment: {positions}")
+    no_overflow(page, "first four KPI layout")
+
+
 def test_cash_tile_compact(page):
     """Public demo: gross (yellow) = pre-fee; cash (green) = gross minus fees."""
     for shift in ("s22", "s20", "s21"):
@@ -408,6 +437,7 @@ def run_case(browser, width, height):
             page.locator("#backHome").click()
             record["screens"].append(screen)
 
+        test_first_four_finance_tiles(page)
         test_cash_tile_compact(page)
         test_demo_forms(page)
         test_qa_persistence(page)
