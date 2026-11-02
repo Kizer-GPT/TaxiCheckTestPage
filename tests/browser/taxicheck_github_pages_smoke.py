@@ -95,10 +95,24 @@ def test_cash_tile_compact(page):
         fees = rubles(page.locator("#tileCommissions").inner_text())
         require(abs(gross - after - fees) < 0.011,
                 f"{shift}: gross {gross} minus fees {fees} != cash after fees {after}")
-        require("Грязь" in page.locator('.tile-cash').inner_text(),
-                "Gross label missing")
+        require("До комиссий" in page.locator('.tile-cash').inner_text(),
+                "Human-readable pre-commission label missing")
         require("После комиссий" in page.locator("#tileCashMeta").inner_text(),
-                "Net cash label missing")
+                "Post-commission label missing")
+        pairs = page.locator(".tile-cash .cash-amount").evaluate_all("""els =>
+          els.map(el => ({font: getComputedStyle(el).fontSize,
+            x: el.getBoundingClientRect().x, y: el.getBoundingClientRect().y,
+            w: el.getBoundingClientRect().width, scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth}))""")
+        require(len(pairs) == 2, "Need exactly two cash figures")
+        require(pairs[0]["font"] == pairs[1]["font"],
+                f"Cash figures must be the same font size: {pairs}")
+        require(pairs[0]["y"] < pairs[1]["y"],
+                f"Gross and post-commission figures must be stacked: {pairs}")
+        require(abs(pairs[0]["x"] - pairs[1]["x"]) < 1,
+                f"Cash figures must have matching horizontal alignment: {pairs}")
+        require(all(p["scrollWidth"] <= p["clientWidth"]+1 for p in pairs),
+                f"Cash figures must not be clipped: {pairs}")
         gross_color = page.locator("#tileGross").evaluate(
             "(el) => getComputedStyle(el).color")
         after_color = page.locator("#tileCash").evaluate(
@@ -108,11 +122,11 @@ def test_cash_tile_compact(page):
                 f"Gross color must be taxi-yellow, got {gross_color}")
         require(after_color == "rgb(107, 225, 174)",
                 f"Post-commission cash must be green, got {after_color}")
-    # 137px old tiles had excessive dead space; shrink while remaining tappable.
+    # Reduce dead space without reducing the cash amount font size.
     heights = page.locator('#home .tile').evaluate_all(
         "(els) => els.map(el => el.getBoundingClientRect().height)")
-    require(max(heights) <= 134,
-            f"Dashboard tiles not compact enough: {heights}")
+    require(max(heights) <= 125,
+            f"Dashboard tiles are still too tall: {heights}")
     require(min(heights) >= 44, "Touch target too small")
     clipping = page.locator('.tile-cash').evaluate("""el => {
       const bottom=el.getBoundingClientRect().bottom;
