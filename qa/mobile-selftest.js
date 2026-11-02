@@ -1,6 +1,6 @@
-/* TaxiCheck public mockup mobile self-test v1.
- * READ-ONLY navigation probes only. No financial writes, submit, login, reset or file actions.
- * Opt-in URL: ?qa=run. This standalone file can later be adapted to the isolated Web App.
+/* TaxiCheck public mockup mobile self-test v2.
+ * No real financial systems. Synthetic CRUD runs ONLY inside an expendable iframe.
+ * Opt-in URL: ?qa=run. Public demo only; not an Apps Script test.
  */
 (function () {
   'use strict';
@@ -36,13 +36,13 @@
   panel.id = 'tcAutoQa'; panel.setAttribute('role','region');
   panel.setAttribute('aria-label','TaxiCheck — самопроверка макета');
   panel.innerHTML = '<header><h2>TaxiCheck · автотест</h2><button class="tcQaClose" type="button" aria-label="Закрыть проверку">×</button></header>'+
-    '<p>Проверка макета на этом телефоне. Только навигация и чтение экрана, без сохранения записей и отправки отчёта.</p>'+
+    '<p>Проверяем интерфейс, ошибки ввода и пробные финансовые сценарии в отдельной временной копии макета. Настоящие деньги и твои записи не затрагиваются.</p>'+
     '<div class="tcQaTop" id="tcQaStatus" role="status" aria-live="polite">Подготовка…</div>'+
     '<ol id="tcQaResults"></ol><div class="tcQaActions">'+
     '<button type="button" id="tcQaAgain">Повторить</button>'+
     '<button type="button" id="tcQaCopy" disabled>Копировать</button>'+
     '<button type="button" id="tcQaShare" disabled>Поделиться</button></div>'+
-    '<p>Внешний вид, реальные касания и удобство по-прежнему проверяются вручную. Safari и Chrome проходят тест на своих устройствах.</p>';
+    '<p>Все суммы вымышлены. Реальные касания, клавиатуру, удобство и внешний вид проверь вручную. Никаких аккаунтов и автоматической отправки.</p>';
   document.body.appendChild(panel);
   var status = $('#tcQaStatus'), output = $('#tcQaResults'), again = $('#tcQaAgain'),
     copy = $('#tcQaCopy'), share = $('#tcQaShare');
@@ -86,7 +86,7 @@
     return ['TaxiCheck · автотест публичного макета','Дата: '+timeStamp(),
       'Платформа: '+deviceName(),'Экран: '+window.innerWidth+' × '+window.innerHeight+' CSS px',
       'Итог: '+ok+' PASS, '+fail+' FAIL',
-      'Нет проверки реальных денег, записи, физического touch или фактической работы Apps Script.',
+      'Проверены только синтетические операции в временном макете; нет проверки реальных денег, физических касаний или Apps Script.',
       ''].concat(checks.map(x=>(x.state==='pass'?'[PASS] ':x.state==='warn'?'[WARN] ':'[FAIL] ')+x.label+(x.detail?' — '+x.detail:''))).join('\n');
   }
   window.addEventListener('error',function(e){ errors.push('JS_ERROR'); });
@@ -167,6 +167,10 @@
       await test('Нет горизонтального выхода интерфейса',function(){
         requireThat(document.documentElement.scrollWidth <= window.innerWidth+3,'HORIZONTAL_OVERFLOW');
       });
+      if(window.TaxiCheckAdvancedQa && typeof window.TaxiCheckAdvancedQa.run==='function'){
+        try{await window.TaxiCheckAdvancedQa.run(result);}
+        catch(e){result('Этапы 2–3: выполнение расширенных тестов','fail',String(e&&e.message||e));}
+      }else{result('Этапы 2–3: набор проверок доступен','fail','ADVANCED_SUITE_MISSING');}
       await test('Нет обнаруженных ошибок JavaScript',function(){
         requireThat(!errors.length, errors[0]||'JS_RUNTIME_ERROR');
       });
