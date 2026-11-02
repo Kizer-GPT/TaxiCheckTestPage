@@ -479,6 +479,11 @@ body{
 .connect-legend{display:flex;flex-wrap:wrap;gap:8px 12px;margin:14px 3px;font-size:11px;color:#b2c7dc}
 .connect-legend>span{display:inline-flex;align-items:center;gap:6px}
 @media(max-width:375px){.connect-card{gap:7px;padding:10px 8px}.connect-provider-head>strong{font-size:13px}.connect-overall{font-size:9.5px}.connect-signal{font-size:9.5px;padding:4px 5px}.connect-logo:not(.compact){width:37px;height:37px;flex-basis:37px;font-size:19px}.connect-action{min-width:55px;padding:5px;font-size:11px}}
+
+/* Only for public demonstration of connection fault scenarios. */
+.demo-scenario-label{display:flex;flex-direction:column;gap:5px;margin-top:9px;font-size:10.5px;color:#a9bfd3;font-weight:650}
+.demo-scenario-picker{width:100%;min-width:0;max-width:100%;min-height:39px;border-radius:12px;border:1px solid rgba(167,202,238,.32);padding:6px 8px;background:#203952;color:#eaf5ff;font-size:12px;font-weight:620}
+.demo-scenario-picker:focus-visible{outline:2px solid #8cc3ff;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -649,33 +654,42 @@ function qaDeviceReport(){
   'Область браузера: '+d.viewport,'Экран: '+d.screen,'Дата проверки: '+d.date].join('\n');
 }
 const qaGroups=[
- {title:'Экран и навигация',items:[
-  ['layout','Открой в Safari или другом мобильном браузере: ничего не обрезано, нет горизонтальной прокрутки.'],
-  ['home','На главном экране видны чистый заработок, рабочее время и все восемь плиток.'],
-  ['tiles','Открой каждую плитку, пролистай детализацию, вернись назад. Все кнопки доступны.'],
-  ['commissions','Открой «Комиссии»: проверь раскрытие операций, фильтры и длинные суммы.']
+ {title:'Главная и навигация',items:[
+  ['layout','Открой страницу на телефоне: нет горизонтальной прокрутки, низ не перекрыт меню.'],
+  ['home','На главной только две суммы: касса после комиссий и чистыми после расходов. Рабочего времени и восьми плиток здесь нет.'],
+  ['nav','Нижнее меню: Главная, Отчёт, Аналитика и Ещё. Все разделы открываются и возвращаются без ошибок.'],
+  ['share','Кнопка «Поделиться» пока неактивна и не пытается отправлять данные.'],
+  ['tiles','Открой Отчёт: там восемь подробных плиток и рабочее время. Каждая ведёт в детализацию.'],
+  ['commissions','В Отчёте открой «Комиссии», проверь фильтры, суммы и раскрытие операций.'],
+  ['analytics','В «Аналитике» только заглушка: графики пока не выдуманы.']
  ]},
- {title:'Смены и даты',items:[
-  ['shift22','Проверь смену 22.10 14:00 → 23.10 02:00: обе даты и время видны.'],
-  ['shift21','Выбери смену 21.10 23:00 → 22.10 13:00: до следующей смены час.'],
-  ['shift20','Выбери смену 20.10 10:00–22:00: она не пересекает полночь.'],
-  ['shiftedit','Открой редактор смены, измени начало на час и проверь пересчёт границы соседней смены. Затем сбрось демо-данные.'],
-  ['overnight','В деталях кассы 22.10 найди демонстрационную операцию после полуночи (23.10 01:18).'],
-  ['custom','Переключись на «Свой период», выбери 22–23.10, нажми «Показать» и вернись к сменам.']
+ {title:'Быстрые записи и расчёты',items:[
+  ['cash','На главной добавь наличный заказ 1500 ₽: касса и чистыми увеличатся на 1500 ₽.'],
+  ['quickfuel','На главной добавь заправку 400 ₽ и 6 л: касса не изменится, чистыми уменьшится на 400 ₽.'],
+  ['cash-edit','В Отчёт → Касса найди тестовый заказ, отредактируй сумму и удали запись. Изменения должны отражаться в итогах.'],
+  ['fuel','В Отчёт → Заправки найди добавленную заправку, открой подробности и удали запись.'],
+  ['other','В Отчёт → Прочие расходы добавь 50 ₽, проверь уменьшение чистыми и затем удали.'],
+  ['warnings','При неизвестных данных должны быть предупреждения, а не ложный подтверждённый ноль.']
  ]},
- {title:'Ручные записи и расчёты',items:[
-  ['cash','Добавь наличный заказ 100 ₽ на 23.10 в 01:30. Убедись, что он появился в кассе.'],
-  ['cash-edit','Измени созданный заказ на 150 ₽, затем удали. Проверь изменение чистого заработка.'],
-  ['fuel','Добавь тестовую заправку 1000 ₽ / 20 л / 50 ₽, проверь её и удали.'],
-  ['other','Добавь прочий расход 50 ₽: заработок должен снизиться на 50 ₽. Удали расход.'],
-  ['warnings','Проверь предупреждения для пустых данных: отсутствие записей не должно означать подтверждённый ноль.']
+ {title:'Подключения: только демонстрация',items:[
+  ['login-menu','Нажми Ещё → Вход и подключения. Видны три сервиса: Яндекс Про, Апарк и Gmail.'],
+  ['status-preview','В Ещё у сервисов маленькие цветные индикаторы. Они явно помечены как демонстрационные.'],
+  ['status-switch','Для Яндекса выбери «Нужен повторный вход»: точка станет красной, вход потребует повтора.'],
+  ['status-sync','Для Gmail выбери «Сбой синхронизации»: авторизация останется активной, общий статус станет жёлтым.'],
+  ['status-unknown','Для Апарка выбери «Не проверено», затем «Всё работает»: цвета и подписи меняются.'],
+  ['login-security','Кнопки «Войти» отключены, реальные пароли и токены не запрашиваются.']
  ]},
- {title:'Особенности телефона',items:[
-  ['controls','Проверь системные поля дат, времени и сумм; клавиатура не перекрывает «Сохранить».'],
-  ['files','В редакторе смены прикрепи безличную тестовую картинку, проверь предпросмотр и удаление. Не используй настоящие документы.'],
-  ['rotation','Поверни телефон горизонтально и обратно: текст и кнопки остаются доступны.'],
-  ['refresh','Нажми «Обновить» или восстанови демо. Галочки QA должны остаться на месте.'],
-  ['reload','Обнови вкладку Safari: галочки QA должны сохраниться. Только «Сбросить чек-лист» удаляет отметки.']
+ {title:'Смены, Safari и QA',items:[
+  ['shift22','Проверь смену 22.10 14:00 → 23.10 02:00: видны обе даты и часы.'],
+  ['shift21','Проверь смену 21.10 23:00 → 22.10 13:00 и часовой перерыв перед следующей.'],
+  ['shiftedit','Открой редактор смены, проверь поля. После изменения границ восстанови демо.'],
+  ['overnight','В Отчёт → Касса у смены 22.10 есть операция после полуночи (23.10 01:18).'],
+  ['custom','Выбери «Свой период» и вернись к сменам: цифры и подписи обновляются.'],
+  ['controls','Проверь клавиатуру, даты и суммы: кнопка сохранения доступна на iPhone.'],
+  ['rotation','Поверни телефон: все суммы и кнопки продолжают помещаться.'],
+  ['files','В редакторе смены проверь безличную картинку и удаление превью. Не используй настоящие документы.'],
+  ['refresh','В Отчёте кнопка «Обновить» сбрасывает демо-данные, но не галочки QA.'],
+  ['reload','Перезагрузка страницы сохраняет галочки QA, но сбрасывает демонстрационные изменения.']
  ]}
 ];
 const qaItems=qaGroups.flatMap(g=>g.items);
@@ -838,6 +852,7 @@ function restoreDemoDefaults(){
  for(const shift of demoShifts){for(const file of Object.values(shift.files||{}).flat()){if(file?.url&&!released.has(file.url)){URL.revokeObjectURL(file.url);released.add(file.url)}}}
  defaultDemoShifts.forEach((original,i)=>Object.assign(demoShifts[i],{...original,files:{}}));
  state.date='2026-10-22';state.periodMode='shift';state.selectedShiftId='s22';state.lastShiftId='s22';state.customPeriod=null;state.periodDirty=false;state.cashZeroConfirmed={};
+ demoSelection={...demoScenarioDefaults};
  state.manual=exampleRecords.map(r=>({...r}));state.expanded.clear();state.filter=-1;state.openForm=false;state.editId=null;state.fuelDemo=false;state.workMinutes=705;state.mileageKm=216;state.consumptionLper100=9.2;state.screen='home';
  const active=demoShifts.find(s=>s.id==='s22');
  $('#from').value=active.from;$('#to').value=active.to;$('#timeFrom').value=active.start;$('#timeTo').value=active.end;
@@ -961,18 +976,47 @@ if(isFuel)html+='<div class="info-notice">Попробуй добавить те
 return html}
 function renderEarnings(){const {view:v}=computed(),net=v.net;header(net===null?'—':money(net),v.provisional?'Условный результат по доступным данным. НЕ подтверждённый убыток или прибыль.':'Сумма по доступным данным. Демонстрационные расходы отмечены отдельно.');if(Number.isFinite(net))$('#heroTotal').classList.add(net<0?'red':'green');let html=row('Касса', '+'+money(v.cash),'green')+row('Комиссии','−'+money(v.fees),'red')+row(v.expectedDays?'Аренда из MAIN · факт + план':'Аренда из MAIN','−'+money(v.rentMain),'red')+row('Заправки · введённые','−'+money(v.fuel),'red')+row('Прочие расходы · введённые','−'+money(v.other),'red')+row('Бонусное покрытие аренды',money(v.bonus),'blue');if(v.provisional){html+='<div class="warn-notice"><div class="review-title">! Требует проверки · '+v.notes.length+' пунктов</div><ul class="review-list">'+v.notes.slice(0,9).map(n=>'<li>'+escapeHtml(n)+'</li>').join('')+'</ul>'+(v.notes.length>9?'<p>Ещё '+(v.notes.length-9)+' предупреждений. Для полного отчёта нужна синхронизация.</p>':'')+'</div>';const days=selectedCalendarDates();if(!selectedShift()&&days.length===1&&!Number.isFinite(dates[days[0]]?.cash)){const checked=!!state.cashZeroConfirmed[days[0]];html+='<button class="review-action" data-confirm-no-cash="'+days[0]+'">'+(checked?'Снять подтверждение нулевой кассы':'Подтвердить: заказов не было (0 ₽)')+'</button>'}}else html+='<div class="info-notice">Бонусы уменьшают денежную часть аренды, не добавляясь к доходу повторно.</div>';return html}
 function renderWork(){const sh=selectedShift(),mins=selectedMinutes();header(mins===null?'—':Math.floor(mins/60)+' ч '+mins%60+' мин','Рабочее время связано со сменой, час буфера не включаем.');if(!sh)return '<div class="info-notice">Для редактирования рабочего времени выберите смену.</div>';return `<div class="form-box"><p class="form-title">Рабочее время · ${dateShort(sh.to)}</p><div class="form-grid"><label class="input-label">Часы<input type="number" id="hours" min="0" max="24" inputmode="numeric" placeholder="${Math.floor(mins/60)}"></label><label class="input-label">Минуты<input type="number" id="minutes" min="0" max="59" inputmode="numeric" placeholder="${mins%60}"></label></div><div class="form-buttons"><button class="primary-small" id="saveWork">Применить</button></div></div><div class="info-notice">Изменения только в этом макете.</div>`}
-// Sample-only status model. Never infer real authentication state from this demo.
+// Public demo only: fake connection states, no API requests or real token checks.
+// Keep auth and data delivery separate so "signed in" never implies "synced".
 const demoServices=[
- {id:'yandex',icon:'Я',name:'Яндекс Про',short:'Яндекс',about:'Заказы, касса и комиссии',auth:'ok',sync:'ok',state:'ok',message:'Данные обновляются · пример'},
- {id:'apark',icon:'A',name:'Апарк. Водитель',short:'Апарк',about:'Операции, аренда и бонусы',auth:'error',sync:'unknown',state:'error',message:'Требуется повторный вход · пример'},
- {id:'gmail',icon:'✉',name:'Google · Gmail',short:'Gmail',about:'Письма, чеки и подтверждения',auth:'ok',sync:'warning',state:'warning',message:'Чеки не обновляются · пример'}
+ {id:'yandex',icon:'Я',name:'Яндекс Про',short:'Яндекс',about:'Заказы, касса и комиссии'},
+ {id:'apark',icon:'A',name:'Апарк. Водитель',short:'Апарк',about:'Операции, аренда и бонусы'},
+ {id:'gmail',icon:'✉',name:'Google · Gmail',short:'Gmail',about:'Письма, чеки и подтверждения'}
 ];
+const demoScenarioDefaults={yandex:'ok',apark:'reauth',gmail:'sync_error'};
+let demoSelection={...demoScenarioDefaults};
+const demoScenarios={
+ ok:{auth:'ok',sync:'ok',message:'Вход активен, данные обновляются · пример'},
+ reauth:{auth:'error',sync:'unknown',message:'Сессия истекла, нужен повторный вход · пример'},
+ sync_error:{auth:'ok',sync:'warning',message:'Вход активен, но новые данные не поступают · пример'},
+ unknown:{auth:'unknown',sync:'unknown',message:'Подключение ещё не проверено · пример'}
+};
 const demoStateName={ok:'Работает',error:'Нужен вход',warning:'Сбой обмена',unknown:'Нет данных'};
+function overallConnectionState(auth,sync){
+ if(auth==='error')return 'error';
+ if(auth!=='ok')return 'unknown';
+ if(sync==='warning'||sync==='error')return 'warning';
+ return sync==='ok'?'ok':'unknown';
+}
+function getDemoService(p){
+ const scenario=demoSelection[p.id]||'unknown',sample=demoScenarios[scenario]||demoScenarios.unknown;
+ return {...p,...sample,scenario,state:overallConnectionState(sample.auth,sample.sync)};
+}
 function demoStatusDot(s){return '<span class="status-dot '+s+'" aria-hidden="true"></span>'}
 function demoServiceIcon(p,small=false){return '<span class="connect-logo '+p.id+(small?' compact':'')+'" aria-hidden="true">'+p.icon+'</span>'}
-function demoServiceChips(){return '<div class="more-service-overview" aria-label="Пример статусов подключений">'+demoServices.map(p=>'<div class="more-service-chip" aria-label="'+p.name+': '+demoStateName[p.state]+' (пример)"><span class="chip-icon-wrap">'+demoServiceIcon(p,true)+demoStatusDot(p.state)+'</span><span>'+p.short+'</span></div>').join('')+'</div>'}
-function renderSettings(){header('Меню приложения','Подключения, параметры и проверка прототипа.');return '<div class="more-menu"><button class="more-login-entry" id="openConnections"><span class="more-login-icon" aria-hidden="true">↪</span><span class="more-login-text"><strong>Вход и подключения</strong><small>Яндекс Про · Апарк · Gmail</small></span><span class="more-login-arrow" aria-hidden="true">›</span></button><div class="more-service-label">Статусы подключений <span>демонстрация</span></div>'+demoServiceChips()+'<p class="more-status-disclaimer">Цветные точки показывают пример интерфейса, а не состояние ваших аккаунтов.</p></div><div class="more-subhead">Демо-настройки</div><div class="simple-settings"><button id="resetDemo">Восстановить демонстрационные цифры</button><button id="openPeriod">Изменить период</button></div>'+renderQaChecklist()+'<div class="info-notice">Здесь не выполняется вход и не сохраняются учётные данные. Это только публичный макет.</div>'}
-function renderConnections(){header('Вход и подключения','Пример диагностики источников. Реальные авторизации и синхронизация не проверяются.');return '<div class="connect-demo-notice">ДЕМО · Все статусы ниже вымышлены для проверки дизайна.</div><div class="connect-heading"><strong>Источники данных</strong><small>3 сервиса</small></div><div class="connect-list">'+demoServices.map(p=>'<article class="connect-card" data-provider="'+p.id+'">'+demoServiceIcon(p)+'<div class="connect-main"><div class="connect-provider-head"><strong>'+p.name+'</strong><span class="connect-overall '+p.state+'">'+demoStatusDot(p.state)+demoStateName[p.state]+'</span></div><small>'+p.about+'</small><div class="connect-signal-list"><span class="connect-signal '+p.auth+'">'+demoStatusDot(p.auth)+'Вход: '+(p.auth==='ok'?'активен':p.auth==='error'?'нужен повторно':'не проверен')+'</span><span class="connect-signal '+p.sync+'">'+demoStatusDot(p.sync)+'Данные: '+(p.sync==='ok'?'обновляются':p.sync==='warning'?'ошибка обновления':p.sync==='unknown'?'нет связи':'сбой')+'</span></div><p class="connect-explanation">'+p.message+'</p></div><button type="button" class="connect-action" disabled aria-label="Подключить '+p.name+' — недоступно в прототипе">Войти <span aria-hidden="true">›</span></button></article>').join('')+'</div><div class="connect-legend"><span>'+demoStatusDot('ok')+'Работает</span><span>'+demoStatusDot('error')+'Нужен вход</span><span>'+demoStatusDot('warning')+'Ошибка обновления</span><span>'+demoStatusDot('unknown')+'Не проверено</span></div><div class="info-notice">В реальном приложении отдельно проверяем действительность входа и получение новых данных. Даже при активной авторизации чеки могут перестать поступать. Пароли, коды и токены сюда не вводить.</div>'}
+function demoServiceChips(){return '<div class="more-service-overview" aria-label="Пример статусов подключений">'+demoServices.map(raw=>{const p=getDemoService(raw);return '<div class="more-service-chip" aria-label="'+p.name+': '+demoStateName[p.state]+' (пример)"><span class="chip-icon-wrap">'+demoServiceIcon(p,true)+demoStatusDot(p.state)+'</span><span>'+p.short+'</span></div>'}).join('')+'</div>'}
+function renderSettings(){
+ header('Меню приложения','Подключения, параметры и проверка прототипа.');
+ return '<div class="more-menu"><button class="more-login-entry" id="openConnections"><span class="more-login-icon" aria-hidden="true">↪</span><span class="more-login-text"><strong>Вход и подключения</strong><small>Яндекс Про · Апарк · Gmail</small></span><span class="more-login-arrow" aria-hidden="true">›</span></button><div class="more-service-label">Статусы подключений <span>демонстрация</span></div>'+demoServiceChips()+'<p class="more-status-disclaimer">Цветные точки показывают пример интерфейса, а не состояние ваших аккаунтов.</p></div><div class="more-subhead">Демо-настройки</div><div class="simple-settings"><button id="resetDemo">Восстановить демонстрационные цифры</button><button id="openPeriod">Изменить период</button></div>'+renderQaChecklist()+'<div class="info-notice">Здесь не выполняется вход и не сохраняются учётные данные. Это только публичный макет.</div>';
+}
+function demoScenarioPicker(p){
+ const options=[['ok','Всё работает'],['reauth','Нужен повторный вход'],['sync_error','Сбой синхронизации'],['unknown','Не проверено']];
+ return '<label class="demo-scenario-label">Проверить состояние (демо)<select class="demo-scenario-picker" data-demo-service="'+p.id+'" aria-label="Демо-состояние: '+p.name+'">'+options.map(([key,label])=>'<option value="'+key+'"'+(p.scenario===key?' selected':'')+'>'+label+'</option>').join('')+'</select></label>';
+}
+function renderConnections(){
+ header('Вход и подключения','Тестовый экран диагностики источников данных.');
+ return '<div class="connect-demo-notice">ДЕМО · Переключай тестовые состояния ниже. Никакой реальной проверки подключения нет.</div><div class="connect-heading"><strong>Источники данных</strong><small>3 сервиса</small></div><div class="connect-list">'+demoServices.map(raw=>{const p=getDemoService(raw);return '<article class="connect-card" data-provider="'+p.id+'">'+demoServiceIcon(p)+'<div class="connect-main"><div class="connect-provider-head"><strong>'+p.name+'</strong><span class="connect-overall '+p.state+'">'+demoStatusDot(p.state)+demoStateName[p.state]+'</span></div><small>'+p.about+'</small><div class="connect-signal-list"><span class="connect-signal '+p.auth+'">'+demoStatusDot(p.auth)+'Вход: '+(p.auth==='ok'?'активен':p.auth==='error'?'нужен повторно':'не проверен')+'</span><span class="connect-signal '+p.sync+'">'+demoStatusDot(p.sync)+'Данные: '+(p.sync==='ok'?'обновляются':p.sync==='warning'?'ошибка обновления':p.sync==='unknown'?'нет связи':'сбой')+'</span></div><p class="connect-explanation">'+p.message+'</p>'+demoScenarioPicker(p)+'</div><button type="button" class="connect-action" disabled aria-label="Подключить '+p.name+' — недоступно в прототипе">Войти <span aria-hidden="true">›</span></button></article>'}).join('')+'</div><div class="connect-legend"><span>'+demoStatusDot('ok')+'Работает</span><span>'+demoStatusDot('error')+'Нужен вход</span><span>'+demoStatusDot('warning')+'Ошибка обновления</span><span>'+demoStatusDot('unknown')+'Не проверено</span></div><div class="info-notice">В реальной интеграции действительность входа и получение данных проверяются отдельно. Например, Gmail может быть подключён, но чеки перестанут приходить. Пароли, коды и токены сюда не вводить.</div>';
+}
 function renderSync(){header('Не подключена','Фоновая синхронизация здесь только представлена визуально.');return '<div class="warn-notice">В прототипе нет API-запросов, фоновых таймеров и авторизации. Реальную синхронизацию нужно отдельно проверять в TaxiCheck.</div>'+row('Апарк · MAIN','Демо-данные')+row('Апарк · BY_BONUS','Демо-данные')+row('Gmail','Не подключена')}
 function renderOther(){if(state.screen==='mileage'){const sh=selectedShift(),m=sh&&Number.isFinite(sh.mileage)?sh.mileage:null;header(m===null?'—':m.toLocaleString('ru-RU')+' км',sh?'Демонстрационный пробег выбранной смены.':'Произвольный интервал не имеет вычисляемого пробега.');return sh?row('Пробег смены',m===null?'—':m+' км')+'<div class="info-notice">Для редактирования пробега и прикрепления фото одометра открой «Параметры смены» на главной.</div>':'<div class="info-notice">Для отображения пробега выберите смену в ленте под панелью периода.</div>'}const v=Number.isFinite(state.consumptionLper100)?state.consumptionLper100:null;header(v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км','Накопительный расход по всем сменам, не зависит от периода (демо).');return row('Накопительный расход',v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км')+'<div class="info-notice">Демонстрационное значение. Для точного расчёта нужны подтверждённый пробег и фактически израсходованное топливо.</div>'}
 function renderDetail(){const name=state.screen;const content=name==='cash'?renderCash():name==='commissions'?renderCommissions():name==='rent'?renderRent():name==='bonuses'?renderBonuses():name==='fuel'||name==='other'?renderFuelOrOther(name):name==='earnings'?renderEarnings():name==='work'?renderWork():name==='settings'?renderSettings():name==='connections'?renderConnections():name==='sync'?renderSync():renderOther();$('#detailContent').innerHTML=content}
@@ -1005,7 +1049,7 @@ $('#netCard').addEventListener('click',e=>{if(!e.target.closest('#workButton')&&
 $('#gear').addEventListener('click',()=>openScreen('settings'));$('#backHome').addEventListener('click',()=>openScreen(['report','analytics','settings'].includes(state.returnScreen)?state.returnScreen:'home'));
 $('#detailContent').addEventListener('click',onDetailClick);
 $('#detailContent').addEventListener('input',e=>{if(e.target.id!=='qaModelInput')return;try{localStorage.setItem(QA_MODEL_KEY,e.target.value.slice(0,80))}catch(_){}});
-$('#detailContent').addEventListener('change',e=>{const input=e.target.closest('[data-qa-id]');if(!input||!qaIdSet.has(input.dataset.qaId))return;if(input.checked)qaProgress.checked.add(input.dataset.qaId);else qaProgress.checked.delete(input.dataset.qaId);saveQaProgress();refreshQaCounters()});
+$('#detailContent').addEventListener('change',e=>{const picker=e.target.closest('[data-demo-service]');if(picker){if(demoServices.some(p=>p.id===picker.dataset.demoService)&&Object.prototype.hasOwnProperty.call(demoScenarios,picker.value)){demoSelection[picker.dataset.demoService]=picker.value;renderDetail()}return}const input=e.target.closest('[data-qa-id]');if(!input||!qaIdSet.has(input.dataset.qaId))return;if(input.checked)qaProgress.checked.add(input.dataset.qaId);else qaProgress.checked.delete(input.dataset.qaId);saveQaProgress();refreshQaCounters()});
 $('#refreshBtn').addEventListener('click',demoRefresh);
 $('#syncStatus').addEventListener('click',()=>openScreen('sync'));
 renderShiftRibbon();updateDateLabels();render();
