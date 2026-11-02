@@ -87,54 +87,54 @@ def assert_shift(page, shift_id, start, start_time, end, end_time):
 
 
 def test_one_screen_dashboard(page):
-    """Compact dashboard without tiny KPI fonts or broken shift controls."""
-    require(page.locator("#shiftEditToggle").is_visible(), "Shift editor shortcut missing")
-    require(not page.locator("#shiftEditContent").is_visible(),
-            "Expanded shift form must not occupy initial screen")
+    """Driver-first home: only cash-after-fees, net and quick entry actions."""
+    require(page.locator("#home").is_visible(), "Home not visible")
+    require(not page.locator("#report").is_visible(), "Old analytics clutter is on the home")
+    require(page.locator("#home .home-kpi").count() == 2,
+            "Home must only have cash and net KPI cards")
+    require(page.locator("#homeCashValue").is_visible()
+            and page.locator("#homeNetValue").is_visible(),
+            "Two home amounts not visible")
+    require(page.locator("#homeCashCaption").inner_text().startswith("После комиссий"),
+            "Home cash must represent after-fee earnings")
+    require(not page.locator("#quickEntryForm").is_visible(),
+            "Quick input should start collapsed")
+    require(page.locator('[data-quick="cash"]').is_visible()
+            and page.locator('[data-quick="fuel"]').is_visible(),
+            "One-tap cash and fuel actions must be available")
+    require(page.locator("#sharePreview").is_disabled(), "Share is a clearly disabled placeholder")
+    require(page.locator("#shiftEditToggle").is_visible(), "Shift edit shortcut missing")
     require(not page.locator("#shiftEditorPanel").is_visible(),
-            "Collapsed shift editor panel wastes space")
-    require(page.locator("#modeShifts").is_visible() and page.locator("#modeCustom").is_visible(),
-            "Period mode toggle missing")
-    chips = page.locator(".shift-chip")
-    require(chips.count() >= 5, "Shift ribbon was lost")
-    metrics = page.evaluate("""() => {
-      const rect = selector => {
-        const r = document.querySelector(selector).getBoundingClientRect();
-        const el = document.querySelector(selector);
-        return {top:r.top,bottom:r.bottom,height:r.height,
-          radius:getComputedStyle(el).borderTopLeftRadius};
-      };
-      return {viewport:window.innerHeight,header:rect('#appHeader'),
-        period:rect('#periodPanel'),net:rect('#netCard'),
-        grid:rect('#tileGrid'),last:rect('#tileGrid .tile:last-child'),
-        refresh:rect('#refreshBtn'),chip:rect('.shift-chip'),
-        font:getComputedStyle(document.querySelector('#tileCash')).fontSize};
+            "Closed shift editor consumes home space")
+    require(page.locator(".shift-chip").count() >= 5,
+            "Historical shift selector lost")
+    bounds = page.evaluate("""() => {
+      const rect = s => document.querySelector(s).getBoundingClientRect();
+      return {bottom:rect('#sharePreview').bottom,
+        navTop:rect('#bottomNav').top,
+        screen:innerHeight,periodHeight:rect('#periodPanel').height,
+        netFont:getComputedStyle(document.querySelector('#homeNetValue')).fontSize,
+        cashFont:getComputedStyle(document.querySelector('#homeCashValue')).fontSize};
     }""")
-    print("DASHBOARD_FIT", page.viewport_size["width"], metrics, flush=True)
-    require(metrics["period"]["height"] <= 170,
-            f"Shift selector still too tall: {metrics}")
-    require(metrics["chip"]["height"] <= 52,
-            f"Shift chips not compact: {metrics}")
-    require(float(metrics["chip"]["radius"].replace("px", "")) >= 23,
-            "Shift cards must be oval pills")
-    require(metrics["last"]["bottom"] <= metrics["viewport"]+12,
-            f"All eight tiles should fit on a phone screen: {metrics}")
-    require(float(metrics["font"].replace("px", "")) >= 16,
-            "Financial figures shrank too far")
-    no_overflow(page, "one screen compact dashboard")
-    # Ensure switching view still works after moving the editor toggle.
+    print("MINIMAL_HOME_FIT", page.viewport_size["width"], bounds, flush=True)
+    require(bounds["bottom"] < bounds["navTop"]+5,
+            f"Minimal home overlaps fixed tab bar: {bounds}")
+    require(bounds["periodHeight"] <= 170,
+            f"Period switcher must remain compact: {bounds}")
+    require(float(bounds["netFont"].replace("px","")) >= 20
+            and float(bounds["cashFont"].replace("px","")) >= 20,
+            f"Home amounts became illegibly small: {bounds}")
+    no_overflow(page, "minimal home")
     page.locator("#modeCustom").click()
     require(page.locator("#customModePanel").is_visible(),
-            "Custom period form inaccessible")
+            "Custom period is no longer reachable")
     page.locator("#modeShifts").click()
-    require(page.locator("#shiftModePanel").is_visible(),
-            "Shift mode inaccessible")
     page.locator("#shiftEditToggle").click()
     require(page.locator("#shiftEditContent").is_visible(),
-            "Shift editor did not open from new shortcut")
+            "Shift editing is not reachable")
     page.locator("#shiftEditCancel").click()
     require(not page.locator("#shiftEditorPanel").is_visible(),
-            "Shift editor remained visible after cancel")
+            "Shift editor didn't collapse")
 
 
 def test_first_four_finance_tiles(page):
@@ -192,6 +192,7 @@ def test_cash_tile_compact(page):
     """Public demo: gross (yellow) = pre-fee; cash (green) = gross minus fees."""
     for shift in ("s22", "s20", "s21"):
         page.locator(f'#shiftRibbon [data-shift-id="{shift}"]').click()
+        page.locator('[data-nav="report"]').click()
         gross = rubles(page.locator("#tileGross").inner_text())
         after = rubles(page.locator("#tileCash").inner_text())
         fees = rubles(page.locator("#tileCommissions").inner_text())
@@ -225,7 +226,7 @@ def test_cash_tile_compact(page):
         require(after_color == "rgb(107, 225, 174)",
                 f"Post-commission cash must be green, got {after_color}")
     # Reduce dead space without reducing the cash amount font size.
-    heights = page.locator('#home .tile').evaluate_all(
+    heights = page.locator('#report .tile').evaluate_all(
         "(els) => els.map(el => el.getBoundingClientRect().height)")
     require(max(heights) <= 125,
             f"Dashboard tiles are still too tall: {heights}")
@@ -239,11 +240,55 @@ def test_cash_tile_compact(page):
     no_overflow(page, "compact dashboard tiles")
 
 
+def test_quick_entry(page):
+    """Cash changes both figures immediately; fuel changes net only."""
+    page.locator('#shiftRibbon [data-shift-id="s22"]').click()
+    require(page.locator("#home").is_visible(), "Quick entry requires home")
+    before_cash = rubles(page.locator("#homeCashValue").inner_text())
+    before_net = rubles(page.locator("#homeNetValue").inner_text())
+    page.locator('[data-quick="cash"]').click()
+    require(page.locator("#quickEntryForm").is_visible(), "Cash form didn't open")
+    page.locator("#quickAmount").fill("1500")
+    page.locator("#quickComment").fill("QA quick cash")
+    page.locator(".quick-submit").click()
+    require(not page.locator("#quickEntryForm").is_visible(),
+            "Quick form must disappear after saving")
+    cash = rubles(page.locator("#homeCashValue").inner_text())
+    net = rubles(page.locator("#homeNetValue").inner_text())
+    require(abs(cash - before_cash - 1500) < 0.011,
+            f"Cash didn't rise by full cash fare: {before_cash} -> {cash}")
+    require(abs(net - before_net - 1500) < 0.011,
+            f"Net didn't rise by cash fare: {before_net} -> {net}")
+    page.locator('[data-quick="fuel"]').click()
+    require(page.locator("#quickLitresWrap").is_visible(),
+            "Fuel entry should offer optional litres")
+    page.locator("#quickAmount").fill("399.90")
+    page.locator("#quickLitres").fill("6")
+    page.locator(".quick-submit").click()
+    require(abs(rubles(page.locator("#homeNetValue").inner_text()) - (net - 399.90)) < 0.011,
+            "Fuel expense must decrease net profit immediately")
+    require(abs(rubles(page.locator("#homeCashValue").inner_text()) - cash) < 0.011,
+            "Fuel must not alter after-fee cash")
+    page.locator('[data-nav="report"]').click()
+    page.locator('#report .tile[data-screen="cash"]').click()
+    require(page.locator(".record").filter(has_text="QA quick cash").count() == 1,
+            "Quick cash entry missing from detail")
+    page.locator("#backHome").click()
+    require(page.locator("#report").is_visible(),
+            "Back from report details must return to report")
+    page.locator('#report .tile[data-screen="fuel"]').click()
+    require(page.locator(".record").filter(has_text="6,00 л").count() >= 1,
+            "Fuel litres from quick entry missing")
+    page.locator("#backHome").click()
+    page.locator('[data-nav="home"]').click()
+
+
 def test_demo_forms(page):
     """Change an invented record, verify its net effect, then remove it."""
     page.locator('#shiftRibbon [data-shift-id="s22"]').click()
+    page.locator('[data-nav="report"]').click()
     before = rubles(page.locator("#netNum").inner_text())
-    page.locator('#home .tile[data-screen="other"]').click()
+    page.locator('#report .tile[data-screen="other"]').click()
     page.locator('[data-add="other"]').click()
     page.locator("#amountInput").fill("27.50")
     page.locator("#commentInput").fill("QA-night-demo-unique")
@@ -261,7 +306,7 @@ def test_demo_forms(page):
     after = rubles(page.locator("#netNum").inner_text())
     require(abs((before - after) - 27.50) < 0.01,
             f"Expense did not decrease net by 27.50: {before} -> {after}")
-    page.locator('#home .tile[data-screen="other"]').click()
+    page.locator('#report .tile[data-screen="other"]').click()
     match = page.locator(".record").filter(has_text="QA-night-demo-unique")
     match.locator("[data-expand]").click()
     page.once("dialog", lambda dialog: dialog.accept())
@@ -411,9 +456,11 @@ def run_case(browser, width, height):
         response = page.goto(SITE, wait_until="domcontentloaded", timeout=45000)
         require(response is not None and response.ok,
                 f"Page did not load: {response.status if response else 'no response'}")
-        page.locator('#home .tile[data-screen]').first.wait_for(timeout=12000)
-        require(page.locator('#home .tile[data-screen]').count() == 8,
-                "Expected exactly eight dashboard tiles")
+        page.locator('#homeCashValue').wait_for(timeout=12000)
+        require(page.locator('#home .home-kpi').count() == 2,
+                "Expected exactly two dashboard KPIs")
+        require(page.locator('#report .tile[data-screen]').count() == 8,
+                "Report should retain all eight detailed KPI tiles")
         require("вымышлены" in page.locator("#globalNotice").inner_text().lower(),
                 "Missing synthetic-data notice")
         no_overflow(page, "home")
@@ -450,9 +497,17 @@ def run_case(browser, width, height):
             "Selected overnight shift must end on 23 October",
         )
 
+        test_quick_entry(page)
+        page.locator('[data-nav="report"]').click()
+        require(page.locator("#report").is_visible(), "Report tab didn't open")
+        require(page.locator("#netCard").is_visible(), "Hourly metrics missing from report")
+        page.screenshot(path=str(OUT / f"pages_{width}_report.jpg"),
+                        type="jpeg", quality=72, full_page=True,
+                        animations="disabled")
+        record["screens"].append("report")
         for screen in ("cash", "commissions", "rent", "fuel",
                        "other", "bonuses", "mileage", "consumption"):
-            page.locator(f'#home .tile[data-screen="{screen}"]').click()
+            page.locator(f'#report .tile[data-screen="{screen}"]').click()
             require(page.locator("#detail").is_visible(),
                     f"Details not opened: {screen}")
             no_overflow(page, f"details {screen}")
@@ -462,6 +517,7 @@ def run_case(browser, width, height):
         test_first_four_finance_tiles(page)
         test_cash_tile_compact(page)
         test_demo_forms(page)
+        page.locator('[data-nav="home"]').click()
         test_qa_persistence(page)
         record["screens"].append("qa_checklist")
         require(not record["errors"], f"JavaScript exceptions: {record['errors']}")
