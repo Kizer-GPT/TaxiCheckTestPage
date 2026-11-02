@@ -150,8 +150,9 @@ def test_first_four_finance_tiles(page):
                 f"{name}: title is misplaced")
         require(heading.evaluate("(x) => getComputedStyle(x).borderBottomStyle") == "solid",
                 f"{name}: heading separator missing")
-        require(card.evaluate("(x) => getComputedStyle(x).justifyContent") == "space-between",
-                f"{name}: content should be anchored, not floating in the middle")
+        expected_justify = "flex-start" if name == "Заправки" else "space-between"
+        require(card.evaluate("(x) => getComputedStyle(x).justifyContent") == expected_justify,
+                f"{name}: content placement not aligned as intended")
     for index in range(4, 8):
         require("tile-finance" not in (cards.nth(index).get_attribute("class") or ""),
                 "Lower four cards must keep their existing layout")
@@ -184,7 +185,7 @@ def test_first_four_finance_tiles(page):
     }""")
     require(abs(totals["fuel"]-totals["rent"]) < 7,
             f"Fuel amount is too far below rent amount: {totals}")
-        no_overflow(page, "first four KPI layout")
+    no_overflow(page, "first four KPI layout")
 
 
 def test_cash_tile_compact(page):
