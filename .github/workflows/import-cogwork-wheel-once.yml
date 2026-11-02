@@ -1,0 +1,52 @@
+name: Import original Cogwork Wheel PNG once
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/import-cogwork-wheel-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import-original-icon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download exact original wiki PNG without edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          curl -fL --retry 3 --retry-delay 2 --max-time 30 \
+            "https://cdn.wikimg.net/en/hkwiki/images/8/8e/Cogwork_Wheel.png" \
+            --output assets/cogwork-wheel.png
+          python - <<'PY'
+          import struct, pathlib, hashlib
+          path = pathlib.Path("assets/cogwork-wheel.png")
+          data = path.read_bytes()
+          assert data[:8] == b"\\x89PNG\\r\\n\\x1a\\n", "Not a valid PNG signature"
+          assert 100 < len(data) < 100_000, "Unexpected original icon size"
+          assert struct.unpack(">II", data[16:24]) == (134, 133), "Wrong PNG dimensions"
+          print("Source image: 134x133 PNG, bytes:", len(data))
+          print("Image SHA256:", hashlib.sha256(data).hexdigest())
+          PY
+      - name: Switch app to versioned local PNG asset
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("index.html")
+          s=p.read_text()
+          source="https://cdn.wikimg.net/en/hkwiki/images/8/8e/Cogwork_Wheel.png"
+          assert s.count(source)==1, "Unexpected original URL occurrences"
+          p.write_text(s.replace(source,"assets/cogwork-wheel.png"))
+          PY
+          git config user.name "TaxiCheck Assets Bot"
+          git config user.email "taxicheck-assets-bot@users.noreply.github.com"
+          git add assets/cogwork-wheel.png index.html
+          git commit -m "assets: pin original unmodified Cogwork Wheel icon locally"
+          git push origin HEAD:main
