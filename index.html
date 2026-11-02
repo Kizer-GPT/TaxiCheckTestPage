@@ -299,6 +299,19 @@ body{
 .qa-device-note{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 @media(max-width:360px){.qa-panel{padding:9px}.qa-task{padding:10px 6px}.qa-actions button{font-size:12px}}
 
+/* Structured first four KPIs: consistent heading/divider, data anchored below.
+   The bottom four tiles intentionally keep their previous layout. */
+.tile-finance{justify-content:space-between;gap:6px;padding:9px 11px}
+.tile-finance>.tile-finance-heading{display:block;align-self:stretch;font-size:14px;line-height:1.2;font-weight:740;padding-bottom:5px;border-bottom:1px solid rgba(195,218,244,.15)}
+.tile-finance .tile-finance-body{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;min-width:0}
+.tile-finance .tile-value-group,.tile-finance .tile-rent-body{justify-content:flex-end;gap:2px}
+.tile-finance .tile-rent-breakdown{gap:0}
+.tile-commissions .tile-finance-body>.tile-meta{min-height:0;line-height:1.2}
+.tile-commissions .tile-finance-body>strong{line-height:1.18}
+.tile-cash.tile-finance{gap:5px}
+.tile-cash.tile-finance .tile-cash-body{gap:3px}
+@media(max-width:360px){.tile-finance{padding:8px 9px}.tile-finance>.tile-finance-heading{padding-bottom:4px}}
+
 /* Mobile dashboard fit: compact without reducing KPI numerals or tap targets. */
 .visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .app{padding-top:8px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
@@ -419,10 +432,10 @@ body{
  <main id="home">
   <section class="panel net" id="netCard" role="button" tabindex="0"><div><div class="net-caption">Чистый заработок</div><div class="net-figure"><strong class="net-num" id="netNum">8 838,10 ₽</strong><button class="net-alert" id="netAlert" title="Почему предварительно">!</button></div><p class="net-note" id="netSub">Предварительно</p></div><div class="work-summary"><span>Рабочее время</span><strong id="workValue">—</strong><span>Чистыми в час</span><strong id="hourValue">—</strong><button id="workButton">Изменить</button></div></section>
   <div class="tiles" id="tileGrid">
-   <button class="tile tile-cash" data-screen="cash"><span>Касса</span><div class="tile-cash-body"><div class="tile-cash-line"><small class="cash-caption">До комиссий</small><strong id="tileGross" class="cash-amount cash-gross">15 987,80 ₽</strong></div><div class="tile-cash-line"><small class="cash-caption" id="tileCashMeta">После комиссий</small><strong id="tileCash" class="cash-amount green">13 324,35 ₽</strong></div></div></button>
-   <button class="tile" data-screen="commissions"><span>Комиссии</span><div class="tile-value-group"><strong id="tileCommissions" class="red">2 663,45 ₽</strong><small class="tile-meta">Удержания MAIN</small></div></button>
-   <button class="tile" data-screen="rent"><span>Аренда</span><div class="tile-rent-body"><strong id="tileRent">3 100,00 ₽</strong><div class="tile-rent-breakdown" id="tileRentSplit"><span id="tileRentBonus">Бонусами 1 250,00 ₽</span><span id="tileRentMain">Деньгами 1 850,00 ₽</span></div></div></button>
-   <button class="tile" data-screen="fuel"><span>Заправки</span><div class="tile-value-group"><strong id="tileFuel">2 396,25 ₽</strong><small class="tile-meta" id="tileFuelMeta">Демо · 35,50 л</small></div></button>
+   <button class="tile tile-finance tile-cash" data-screen="cash"><span class="tile-finance-heading">Касса</span><div class="tile-cash-body"><div class="tile-cash-line"><small class="cash-caption">До комиссий</small><strong id="tileGross" class="cash-amount cash-gross">15 987,80 ₽</strong></div><div class="tile-cash-line"><small class="cash-caption" id="tileCashMeta">После комиссий</small><strong id="tileCash" class="cash-amount green">13 324,35 ₽</strong></div></div></button>
+   <button class="tile tile-finance tile-commissions" data-screen="commissions"><span class="tile-finance-heading">Комиссии</span><div class="tile-finance-body"><small class="tile-meta">Всего удержано</small><strong id="tileCommissions" class="red">2 663,45 ₽</strong></div></button>
+   <button class="tile tile-finance tile-rent" data-screen="rent"><span class="tile-finance-heading">Аренда</span><div class="tile-rent-body"><strong id="tileRent">3 100,00 ₽</strong><div class="tile-rent-breakdown" id="tileRentSplit"><span id="tileRentBonus">Бонусами 1 250,00 ₽</span><span id="tileRentMain">Деньгами 1 850,00 ₽</span></div></div></button>
+   <button class="tile tile-finance tile-fuel" data-screen="fuel"><span class="tile-finance-heading">Заправки</span><div class="tile-value-group"><strong id="tileFuel">2 396,25 ₽</strong><small class="tile-meta" id="tileFuelMeta">Демо · 35,50 л</small></div></button>
    <button class="tile" data-screen="other"><span>Прочие расходы</span><div class="tile-value-group"><strong id="tileOther">240,00 ₽</strong><small class="tile-meta" id="tileOtherMeta">Демо · 2 расхода</small></div></button>
    <button class="tile" data-screen="bonuses"><span>Бонусы</span><div class="tile-value-group"><strong id="tileBonuses" class="blue">1 250,00 ₽</strong><small class="tile-meta">Покрытие аренды</small></div></button>
    <button class="tile" data-screen="mileage"><span>Пробег</span><div class="tile-value-group"><strong id="tileMileage">216 км</strong><small class="tile-meta" id="tileMileageMeta">Пробег смены · демо</small></div></button>
