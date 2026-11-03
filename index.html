@@ -501,6 +501,18 @@ body{
 /* QA mobile touch audit: clickable period controls must reach 44 CSS px. */
 #periodPanel .period-mode-tab{min-height:44px}
 #periodPanel .shift-edit-shortcut{width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important}
+
+/* Self-contained synthetic-only live-refresh scenario, never API or storage. */
+.demo-sync-lights{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:9px 0 3px}
+.demo-sync-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;min-width:88px;justify-content:center;background:#192b3c;border:1px solid #40536a;border-radius:999px;font-size:11px;color:#cfdeed;font-weight:750}
+.demo-sync-chip strong{font-size:16px;color:#e4f3fe;font-weight:900;line-height:1}
+.demo-sync-chip .demo-b-blue{color:#74aefd}
+.demo-sync-chip .demo-g-color{color:#4285f4;background:linear-gradient(130deg,#4285f4 12%,#ea4335 44%,#fbbc05 72%,#34a853);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.demo-sync-chip i{display:inline-block;width:9px;height:9px;border-radius:50%;background:#85909d;box-shadow:0 0 0 2px #f0f5ff0b}
+.demo-sync-chip[data-status="running"] i{background:#eebc40;box-shadow:0 0 8px #f2b93b88}
+.demo-sync-chip[data-status="success"] i{background:#39cb83;box-shadow:0 0 8px #2dce8499}
+.demo-sync-chip[data-status="error"] i{background:#ef596b;box-shadow:0 0 8px #e7596c66}
+.demo-sync-note{font-size:11px;color:#bbcee0;text-align:center;margin:4px 4px 9px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -608,6 +620,12 @@ body{
   <div id="detailContent"></div>
  </main>
  <button class="big-button" id="refreshBtn">Обновить</button>
+ <div class="demo-sync-lights" id="demoSyncLights" aria-label="Имитация состояния источников">
+   <span class="demo-sync-chip" data-demo-source="main" data-status="idle"><strong>$</strong> MAIN <i aria-hidden="true"></i></span>
+   <span class="demo-sync-chip" data-demo-source="bonuses" data-status="idle"><strong class="demo-b-blue">B</strong> Бонусы <i aria-hidden="true"></i></span>
+   <span class="demo-sync-chip" data-demo-source="mail" data-status="idle"><strong class="demo-g-color">G</strong> Gmail <i aria-hidden="true"></i></span>
+ </div>
+ <p class="demo-sync-note" id="demoSyncNote" role="status" aria-live="polite">ДЕМО: нажмите «Обновить», чтобы получить вымышленный заказ и увидеть пересчёт.</p>
  <button class="sync-line" id="syncStatus">Демо-режим · реальные данные не обновляются</button>
 </div>
 <nav class="bottom-nav" id="bottomNav" aria-label="Навигация по приложению">
@@ -705,7 +723,7 @@ const qaGroups=[
   ['controls','Проверь клавиатуру, даты и суммы: кнопка сохранения доступна на iPhone.'],
   ['rotation','Поверни телефон: все суммы и кнопки продолжают помещаться.'],
   ['files','В редакторе смены проверь безличную картинку и удаление превью. Не используй настоящие документы.'],
-  ['refresh','В Отчёте кнопка «Обновить» сбрасывает демо-данные, но не галочки QA.'],
+  ['refresh','В Отчёте нажми «Обновить»: появится вымышленный заказ, касса увеличится, комиссии и чистый заработок пересчитаются. Сброс доступен в «Ещё».'],
   ['reload','Перезагрузка страницы сохраняет галочки QA, но сбрасывает демонстрационные изменения.']
  ]}
 ];
@@ -751,6 +769,14 @@ const dates={
  '2026-10-24':{cash:14815.60,fees:2822.20,rent:3100.00,bonus:0,commission:[1950.40,429.60,316.20,126.00]},
  '2026-10-31':{cash:12930.30,fees:2420.10,rent:1900.00,bonus:1200.00,commission:[1642.50,372.30,291.20,114.10]}
 };
+const initialDemoShift22={...dates['2026-10-22'],commission:[...dates['2026-10-22'].commission]};
+const simulatedOrderSamples=[
+ {gross:1380,time:'23.10 · 01:37',order:'TC-DEMO-101'},
+ {gross:945.50,time:'22.10 · 21:48',order:'TC-DEMO-102'},
+ {gross:1710,time:'22.10 · 19:22',order:'TC-DEMO-103'}
+];
+// Demo commission percentages, used only for illustration, NOT real Apark rates.
+const DEMO_ORDER_FEE_RATES=[0.18,0.05,0.03,0];
 const demoShiftCashGroups={
  s18:[{time:'13:40',amount:5230.10},{time:'17:55',amount:5700.20},{time:'21:20',amount:5260.10}],
  s19:[{time:'14:10',amount:5115.15},{time:'18:35',amount:5260.25},{time:'22:20',amount:5783.00}],
@@ -812,7 +838,7 @@ exampleRecords.push(...extraDemoRecords);
 function plusMinutes(date,time,delta){const x=new Date(date+'T'+time+':00Z');x.setUTCMinutes(x.getUTCMinutes()+delta);return {date:x.toISOString().slice(0,10),time:x.toISOString().slice(11,16)}}
 const demoShifts=[{id:'s18',from:'2026-10-18',start:'00:00',to:'2026-10-18',end:'23:00',mileage:176,workMinutes:720,files:{}},{id:'s19',from:'2026-10-19',start:'00:00',to:'2026-10-19',end:'23:00',mileage:246,workMinutes:735,files:{}},{id:'s20',from:'2026-10-20',start:'10:00',to:'2026-10-20',end:'22:00',mileage:193,workMinutes:660,files:{}},{id:'s21',from:'2026-10-21',start:'23:00',to:'2026-10-22',end:'13:00',mileage:222,workMinutes:760,files:{}},{id:'s22',from:'2026-10-22',start:'14:00',to:'2026-10-23',end:'02:00',mileage:216,workMinutes:705,files:{}}];
 const defaultDemoShifts=demoShifts.map(s=>({...s,files:{}}));
-const state={quickType:null,returnScreen:'home',screen:'home',date:'2026-10-22',periodMode:'shift',selectedShiftId:'s22',lastShiftId:'s22',customPeriod:null,periodDirty:false,filter:-1,manual:exampleRecords.map(r=>({...r})),expanded:new Set(),openForm:false,editId:null,fuelDemo:false,workMinutes:705,mileageKm:216,consumptionLper100:9.2,pendingFiles:null,refreshing:false,cashZeroConfirmed:{}};
+const state={quickType:null,returnScreen:'home',screen:'home',date:'2026-10-22',periodMode:'shift',selectedShiftId:'s22',lastShiftId:'s22',customPeriod:null,periodDirty:false,filter:-1,manual:exampleRecords.map(r=>({...r})),expanded:new Set(),openForm:false,editId:null,fuelDemo:false,workMinutes:705,mileageKm:216,consumptionLper100:9.2,pendingFiles:null,refreshing:false,simulationRuns:0,simulatedOrders:[],demoStatuses:{main:'idle',bonuses:'idle',mail:'idle'},demoMessage:'ДЕМО: при обновлении появится вымышленный заказ. Реальные API не вызываются.',cashZeroConfirmed:{}};
 function selectedShift(){return state.periodMode==='shift'?demoShifts.find(x=>x.id===state.selectedShiftId)||null:null}
 function selectedMinutes(){const sh=selectedShift();return sh?sh.workMinutes:null}
 // Compute a complete plan first; never mutate documented boundaries on a failed validation.
@@ -870,6 +896,9 @@ function restoreDemoDefaults(){
  defaultDemoShifts.forEach((original,i)=>Object.assign(demoShifts[i],{...original,files:{}}));
  state.date='2026-10-22';state.periodMode='shift';state.selectedShiftId='s22';state.lastShiftId='s22';state.customPeriod=null;state.periodDirty=false;state.cashZeroConfirmed={};
  demoSelection={...demoScenarioDefaults};
+ Object.assign(dates['2026-10-22'],{...initialDemoShift22,commission:[...initialDemoShift22.commission]});
+ state.simulationRuns=0;state.simulatedOrders=[];state.demoStatuses={main:'idle',bonuses:'idle',mail:'idle'};
+ state.demoMessage='ДЕМО сброшено. При обновлении появится вымышленный заказ. Реальные API не вызываются.';
  state.manual=exampleRecords.map(r=>({...r}));state.expanded.clear();state.filter=-1;state.openForm=false;state.editId=null;state.fuelDemo=false;state.workMinutes=705;state.mileageKm=216;state.consumptionLper100=9.2;state.screen='home';
  const active=demoShifts.find(s=>s.id==='s22');
  $('#from').value=active.from;$('#to').value=active.to;$('#timeFrom').value=active.start;$('#timeTo').value=active.end;
@@ -879,21 +908,68 @@ function restoreDemoDefaults(){
  for(const id of ['photoBefore','photoAfter'])$('#'+id).value='';
  renderShiftRibbon();updateDateLabels();render();
 }
+
+function demoSyncPaint(){
+ const panel=$('#demoSyncLights'),note=$('#demoSyncNote'),report=state.screen==='report';
+ panel.hidden=!report;note.hidden=!report;
+ for(const id of ['main','bonuses','mail']){
+  const item=panel.querySelector('[data-demo-source="'+id+'"]');
+  const status=state.demoStatuses[id]||'idle';
+  item.dataset.status=status;
+  item.title=(id==='main'?'MAIN':id==='bonuses'?'Бонусы':'Gmail')+
+   ': '+({idle:'не запускалось',running:'имитация загрузки',success:'имитация завершена'}[status]||'ошибка')+' (демо)';
+ }
+ note.textContent=state.demoMessage;
+}
+function simulateOrderFromDemoFeed(){
+ const sample=simulatedOrderSamples[state.simulationRuns];
+ if(!sample)return null;
+ const rates=DEMO_ORDER_FEE_RATES.map(rate=>Math.round(sample.gross*rate*100)/100);
+ const commission=Math.round(rates.reduce((a,b)=>a+b,0)*100)/100;
+ const item={...sample,fees:rates,commission,net:Math.round((sample.gross-commission)*100)/100,
+  id:'demofeed-'+sample.order,title:'Новый заказ · '+sample.order+' (демо)',amount:sample.gross,
+  sub:'Имитация операции Апарка · НЕ реальная выгрузка',
+  desc:'Вымышленный заказ. Цифры и проценты комиссий придуманы для демонстрации.'};
+ const d=dates['2026-10-22'];
+ d.cash=Math.round((d.cash+sample.gross)*100)/100;
+ d.fees=Math.round((d.fees+commission)*100)/100;
+ d.commission=d.commission.map((v,i)=>Math.round((v+rates[i])*100)/100);
+ state.simulatedOrders.unshift(item);
+ state.simulationRuns++;
+ return item;
+}
 function demoRefresh(){
  if(state.refreshing)return;
+ if(state.simulationRuns>=simulatedOrderSamples.length){
+  toast('Все три демо-заказа получены. Для повтора: Ещё → Восстановить демонстрационные цифры.');
+  return;
+ }
+ // Keep demo on the one prepared shift with complete synthetic numbers.
+ // This selector never touches personal history or the owner-only Web App.
+ if(!selectedShift()||selectedShift().id!=='s22'){chooseShift('s22');openScreen('report')}
  state.refreshing=true;
+ state.demoStatuses={main:'running',bonuses:'running',mail:'running'};
+ state.demoMessage='Имитация получения данных: MAIN, бонусы и Gmail · без сетевых запросов…';
  const button=$('#refreshBtn');
- button.disabled=true;button.classList.add('is-refreshing');button.setAttribute('aria-busy','true');button.textContent='Обновляем макет';
- $('.app').classList.add('is-refreshing');
- if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)window.scrollTo(0,0);
- else window.scrollTo({top:0,behavior:'smooth'});
+ button.disabled=true;button.classList.add('is-refreshing');button.setAttribute('aria-busy','true');button.textContent='Получаем данные · демо';
+ $('.app').classList.add('is-refreshing');demoSyncPaint();
  setTimeout(()=>{
-  try{restoreDemoDefaults();window.scrollTo({top:0,behavior:'auto'})}
-  finally{
+  try{
+   const item=simulateOrderFromDemoFeed();
+   state.demoStatuses={main:'success',bonuses:'success',mail:'success'};
+   state.demoMessage='ДЕМО: +1 заказ '+money(item.gross)+
+     ', комиссии +'+money(item.commission)+', чистыми +'+money(item.net)+
+     '. Суммы вымышлены, API не использован. '+state.simulationRuns+'/'+simulatedOrderSamples.length+'.';
+   $('#globalNotice').textContent='ДЕМО-ОБНОВЛЕНИЕ: добавлен вымышленный заказ '+item.order+
+     '. Данные Апарка и Gmail не запрашивались.';
+   render();
+   toast('Демо-заказ получен. Касса и комиссии пересчитаны.');
+  } finally{
    button.classList.remove('is-refreshing');$('.app').classList.remove('is-refreshing');
    button.textContent='Обновить';button.disabled=false;button.removeAttribute('aria-busy');state.refreshing=false;
+   demoSyncPaint();
   }
- },680);
+ },1100);
 }
 function toast(s){const n=$('#toast');n.textContent=s;n.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>n.hidden=true,2500);}
 function dateText(d){if(!d)return'—';const a=d.split('-');return a[2]+'.'+a[1]+'.'+a[0]}
@@ -974,7 +1050,7 @@ const sh=selectedShift(),first=sh?.from||$('#from').value,last=sh?.to||$('#to').
 const entryDate=rec?.date||(sh?sh.from:last),entryTime=rec?.time||'';
 return `<div class="form-box" id="entryForm"><p class="form-title">${rec?'Редактировать':'Добавить'} ${name}</p><div class="form-grid"><label class="input-label">Сумма, ₽<input type="number" id="amountInput" min="0.01" step="0.01" inputmode="decimal" placeholder="${amountHint}" value="${amount}"></label><label class="input-label">Комментарий<input type="text" id="commentInput" maxlength="180" placeholder="${escapeHtml(commentHint)}" value="${escapeHtml(comment)}"></label></div><div class="form-grid" style="margin-top:8px"><label class="input-label">Дата операции<input type="date" id="entryDateInput" min="${first}" max="${last}" value="${entryDate}" required></label><label class="input-label">Время операции · необязательно<input type="time" id="entryTimeInput" value="${entryTime}"></label></div>${extra}<div class="form-buttons"><button class="primary-small" id="saveEntry">Сохранить</button><button class="ghost-small" id="cancelEntry">Отмена</button></div></div>`}
 function actionForm(type){return !state.openForm?`<button class="action-add" data-add="${type}">＋ ${type==='cash'?'Добавить наличный заказ':type==='fuel'?'Добавить заправку':'Добавить расход'}</button>`:form(type)}
-function renderCash(){const {d,view:v}=computed(),sh=selectedShift(),isDemo=sh&&sh.id!=='s22',cashMissing=v.notes.some(n=>n.includes('касса'));header(v.cashAfterFees===null?'—':money(v.cashAfterFees),cashMissing?'Касса не подтверждена. Отсутствие операций не означает отсутствия поездок.':v.cashAfterFees===null?'Комиссии не подтверждены, итог после комиссий неизвестен.':'После комиссий, до аренды и прочих расходов. Данные демонстрационные.');let html=row('Касса до комиссий',v.cashKnown?money(v.cash):'Нет данных','gold')+row('Комиссии','−'+money(v.fees),'red')+row('Касса после комиссий',v.cashAfterFees===null?'Нет данных':money(v.cashAfterFees),'green')+row(isDemo?'Заказы · демо':'Касса по данным',Number.isFinite(d?.cash)?money(d.cash):cashMissing?'0,00 ₽ · условно':money(v.cashMain))+row('Наличные вручную',money(v.cash-v.cashMain));html+=actionForm('cash')+'<h3 class="compact-heading">История операций</h3>';const groups=isDemo?demoShiftCashGroups[sh.id].map((g,i)=>({id:sh.id+'-group-'+i,title:'Группа заказов · демо',time:g.time,amount:g.amount,sub:'Несколько поездок · пример',desc:'Вымышленная группа. Не выгрузка из Апарка.'})):state.date==='2026-10-22'&&hasValidDay()?demoCashRecords22:[];const records=[...manualCards('cash'),...groups];html+=records.length?'<div class="records">'+records.map(r=>card(r,'cash')).join('')+'</div>':'<p class="empty">Заказов в макет не загружено.</p>';if(cashMissing)html+='<div class="warn-notice">! Требует проверки. Подтвердить отсутствие заказов можно в детализации «Чистого заработка».</div>';return html}
+function renderCash(){const {d,view:v}=computed(),sh=selectedShift(),isDemo=sh&&sh.id!=='s22',cashMissing=v.notes.some(n=>n.includes('касса'));header(v.cashAfterFees===null?'—':money(v.cashAfterFees),cashMissing?'Касса не подтверждена. Отсутствие операций не означает отсутствия поездок.':v.cashAfterFees===null?'Комиссии не подтверждены, итог после комиссий неизвестен.':'После комиссий, до аренды и прочих расходов. Данные демонстрационные.');let html=row('Касса до комиссий',v.cashKnown?money(v.cash):'Нет данных','gold')+row('Комиссии','−'+money(v.fees),'red')+row('Касса после комиссий',v.cashAfterFees===null?'Нет данных':money(v.cashAfterFees),'green')+row(isDemo?'Заказы · демо':'Касса по данным',Number.isFinite(d?.cash)?money(d.cash):cashMissing?'0,00 ₽ · условно':money(v.cashMain))+row('Наличные вручную',money(v.cash-v.cashMain));html+=actionForm('cash')+'<h3 class="compact-heading">История операций</h3>';const groups=isDemo?demoShiftCashGroups[sh.id].map((g,i)=>({id:sh.id+'-group-'+i,title:'Группа заказов · демо',time:g.time,amount:g.amount,sub:'Несколько поездок · пример',desc:'Вымышленная группа. Не выгрузка из Апарка.'})):state.date==='2026-10-22'&&hasValidDay()?demoCashRecords22:[];const records=[...state.simulatedOrders.filter(x=>sh?.id==='s22'),...manualCards('cash'),...groups];html+=records.length?'<div class="records">'+records.map(r=>card(r,'cash')).join('')+'</div>':'<p class="empty">Заказов в макет не загружено.</p>';if(cashMissing)html+='<div class="warn-notice">! Требует проверки. Подтвердить отсутствие заказов можно в детализации «Чистого заработка».</div>';return html}
 function renderCommissions(){
  const {d}=computed(),sh=selectedShift(),isDemo=sh&&sh.id!=='s22';
  header(d?money(d.fees):'Нет данных',isDemo?'Вымышленные удержания выбранной смены.':'Вымышленные удержания по календарной дате.',true);
@@ -982,7 +1058,9 @@ function renderCommissions(){
  let html='<div class="commission-grid">'+d.commission.map((v,i)=>'<button class="commission-card '+(state.filter===i?'selected':'')+'" data-filter="'+i+'" aria-pressed="'+(state.filter===i)+'"><span>'+commissionNames[i]+'</span><strong>−'+money(v)+'</strong></button>').join('')+'</div>';
  html+=row('Комиссия партнёра','Нет подтверждённых списаний');
  const history=isDemo?d.commission.map((amount,i)=>({title:commissionNames[i]+' · демо',cat:i,time:(sh.id==='s21'?['21.10 · 23:30','22.10 · 06:20','22.10 · 10:15','22.10 · 12:10']:['15:30','18:20','20:15','22:10'])[i],amount:-amount})):state.date==='2026-10-22'?demoFeeRecords22:[];
- const records=history.filter(r=>state.filter<0||r.cat===state.filter);
+ const injected=sh?.id==='s22'?state.simulatedOrders.flatMap(order=>order.fees.map((fee,cat)=>
+  fee>0?{title:commissionNames[cat]+' · '+order.order+' (демо)',cat,time:order.time,amount:-fee}:null).filter(Boolean)):[];
+ const records=[...injected,...history].filter(r=>state.filter<0||r.cat===state.filter);
  html+='<h3 class="compact-heading">'+(isDemo?'Удержания · демо':'Демонстрационные удержания')+'</h3><div class="filter-line"><button data-filter="-1">Все операции</button><small>'+records.length+' записей в примере</small></div>';
  html+=records.length?'<div class="records">'+records.map((r,i)=>card({id:'fee'+r.cat+'-'+r.time+'-'+i,title:r.title,time:r.time,sub:isDemo?'Вымышленные удержания':'Демо · удержание',amount:r.amount,desc:isDemo?'Вымышленное удержание для визуального теста.':'Вымышленная операция для проверки интерфейса.'},'fee')).join('')+'</div>':'<div class="empty">Нет операций для фильтра.</div>';return html
 }
@@ -1045,10 +1123,10 @@ function renderConnections(){
  header('Вход и подключения','Тестовый экран диагностики источников данных.');
  return '<div class="connect-demo-notice">ДЕМО · Переключай тестовые состояния ниже. Никакой реальной проверки подключения нет.</div><div class="connect-heading"><strong>Источники данных</strong><small>3 сервиса</small></div><div class="connect-list">'+demoServices.map(raw=>{const p=getDemoService(raw);return '<article class="connect-card" data-provider="'+p.id+'">'+demoServiceIcon(p)+'<div class="connect-main"><div class="connect-provider-head"><strong>'+p.name+'</strong><span class="connect-overall '+p.state+'">'+demoStatusDot(p.state)+demoStateName[p.state]+'</span></div><small>'+p.about+'</small><div class="connect-signal-list"><span class="connect-signal '+p.auth+'">'+demoStatusDot(p.auth)+'Вход: '+(p.auth==='ok'?'активен':p.auth==='error'?'нужен повторно':'не проверен')+'</span><span class="connect-signal '+p.sync+'">'+demoStatusDot(p.sync)+'Данные: '+(p.sync==='ok'?'обновляются':p.sync==='warning'?'ошибка обновления':p.sync==='unknown'?'нет связи':'сбой')+'</span></div><p class="connect-explanation">'+p.message+'</p>'+demoScenarioPicker(p)+'<button type="button" class="login-preview-open" data-preview-login="'+p.id+'">Посмотреть форму входа</button></div><button type="button" class="connect-action" disabled aria-label="Подключить '+p.name+' — недоступно в прототипе">Войти <span aria-hidden="true">›</span></button></article>'}).join('')+'</div>'+renderDemoLoginPreview()+'<div class="connect-legend"><span>'+demoStatusDot('ok')+'Работает</span><span>'+demoStatusDot('error')+'Нужен вход</span><span>'+demoStatusDot('warning')+'Ошибка обновления</span><span>'+demoStatusDot('unknown')+'Не проверено</span></div><div class="info-notice">В реальной интеграции действительность входа и получение данных проверяются отдельно. Например, Gmail может быть подключён, но чеки перестанут приходить. Пароли, коды и токены сюда не вводить.</div>';
 }
-function renderSync(){header('Не подключена','Фоновая синхронизация здесь только представлена визуально.');return '<div class="warn-notice">В прототипе нет API-запросов, фоновых таймеров и авторизации. Реальную синхронизацию нужно отдельно проверять в TaxiCheck.</div>'+row('Апарк · MAIN','Демо-данные')+row('Апарк · BY_BONUS','Демо-данные')+row('Gmail','Не подключена')}
+function renderSync(){header('Симуляция синхронизации','Показываем работу интерфейса на вымышленных данных, без сетевых запросов.');return '<div class="warn-notice">В прототипе нет API-запросов, фоновых таймеров и авторизации. Реальную синхронизацию нужно отдельно проверять в TaxiCheck.</div>'+row('Апарк · MAIN','Демо-данные')+row('Апарк · BY_BONUS','Демо-данные')+row('Gmail','Не подключена')}
 function renderOther(){if(state.screen==='mileage'){const sh=selectedShift(),m=sh&&Number.isFinite(sh.mileage)?sh.mileage:null;header(m===null?'—':m.toLocaleString('ru-RU')+' км',sh?'Демонстрационный пробег выбранной смены.':'Произвольный интервал не имеет вычисляемого пробега.');return sh?row('Пробег смены',m===null?'—':m+' км')+'<div class="info-notice">Для редактирования пробега и прикрепления фото одометра открой «Параметры смены» на главной.</div>':'<div class="info-notice">Для отображения пробега выберите смену в ленте под панелью периода.</div>'}const v=Number.isFinite(state.consumptionLper100)?state.consumptionLper100:null;header(v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км','Накопительный расход по всем сменам, не зависит от периода (демо).');return row('Накопительный расход',v===null?'Нет данных':v.toLocaleString('ru-RU',{maximumFractionDigits:1})+' л/100 км')+'<div class="info-notice">Демонстрационное значение. Для точного расчёта нужны подтверждённый пробег и фактически израсходованное топливо.</div>'}
 function renderDetail(){const name=state.screen;const content=name==='cash'?renderCash():name==='commissions'?renderCommissions():name==='rent'?renderRent():name==='bonuses'?renderBonuses():name==='fuel'||name==='other'?renderFuelOrOther(name):name==='earnings'?renderEarnings():name==='work'?renderWork():name==='settings'?renderSettings():name==='connections'?renderConnections():name==='sync'?renderSync():renderOther();$('#detailContent').innerHTML=content}
-function render(){const home=state.screen==='home',report=state.screen==='report',analytics=state.screen==='analytics',detail=!home&&!report&&!analytics;$('#home').hidden=!home;$('#report').hidden=!report;$('#analytics').hidden=!analytics;$('#detail').hidden=!detail;$('#refreshBtn').hidden=!report;$('#syncStatus').hidden=!report;$('#homeBrand').hidden=!home;$('#backHome').hidden=home||report||analytics;$('#detailTitle').hidden=home;$('#gear').hidden=!home;$('#appHeader').classList.toggle('detail-nav',!home);if(report)$('#detailTitle').textContent='Отчёт';if(analytics)$('#detailTitle').textContent='Аналитика';for(const b of document.querySelectorAll('[data-nav]')){const active=b.dataset.nav===(home?'home':report?'report':analytics?'analytics':['settings','connections'].includes(state.screen)?'settings':'');b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')}syncRibbon();renderHome();if(home)renderQuickForm();if(detail)renderDetail();}
+function render(){const home=state.screen==='home',report=state.screen==='report',analytics=state.screen==='analytics',detail=!home&&!report&&!analytics;$('#home').hidden=!home;$('#report').hidden=!report;$('#analytics').hidden=!analytics;$('#detail').hidden=!detail;$('#refreshBtn').hidden=!report;$('#syncStatus').hidden=!report;$('#homeBrand').hidden=!home;$('#backHome').hidden=home||report||analytics;$('#detailTitle').hidden=home;$('#gear').hidden=!home;$('#appHeader').classList.toggle('detail-nav',!home);if(report)$('#detailTitle').textContent='Отчёт';if(analytics)$('#detailTitle').textContent='Аналитика';for(const b of document.querySelectorAll('[data-nav]')){const active=b.dataset.nav===(home?'home':report?'report':analytics?'analytics':['settings','connections'].includes(state.screen)?'settings':'');b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')}syncRibbon();renderHome();if(home)renderQuickForm();if(detail)renderDetail();demoSyncPaint();}
 function openScreen(s){if(s==='connections')loginPreviewService=null;if(!['home','report','analytics'].includes(s))state.returnScreen=(s==='connections'&&state.screen==='settings')?'settings':state.screen==='report'?'report':state.screen==='analytics'?'analytics':'home';state.screen=s;state.quickType=null;state.filter=-1;state.openForm=false;state.editId=null;state.expanded.clear();render();window.scrollTo(0,0)}
 function renderQuickForm(){const type=state.quickType,form=$('#quickEntryForm');form.hidden=!type;for(const b of document.querySelectorAll('[data-quick]'))b.setAttribute('aria-expanded',String(b.dataset.quick===type));if(!type)return;$('#quickEntryTitle').textContent=type==='cash'?'Наличный заказ':'Заправка';$('#quickLitresWrap').hidden=type!=='fuel';const sh=selectedShift(),first=sh?.from||$('#from').value,last=sh?.to||$('#to').value;$('#quickEntryContext').textContent='Демо · '+(sh?'смена '+dateShort(first)+'–'+dateShort(last):'период до '+dateShort(last));}
 function submitQuickEntry(){const type=state.quickType;if(!['cash','fuel'].includes(type))return;const raw=$('#quickAmount').value,amount=Number(raw);if(!raw||!Number.isFinite(amount)||amount<=0||amount>10000000){toast('Укажи положительную сумму');return}const comment=$('#quickComment').value.trim(),sh=selectedShift(),date=sh?.to||$('#to').value;const lraw=$('#quickLitres').value,litres=type==='fuel'&&lraw?Number(lraw):null;if(lraw&&type==='fuel'&&(!Number.isFinite(litres)||litres<=0)){toast('Проверь количество литров');return}const extra=type==='fuel'&&Number.isFinite(litres)?{litres}:{};state.manual.unshift({id:'q'+Date.now()+Math.random().toString(36).slice(2),shiftId:sh?.id||null,date,time:'',type,amount:+amount.toFixed(2),comment,title:comment||(type==='cash'?'Наличный заказ':'Заправка'),...extra});state.quickType=null;formResetQuick();render();toast((type==='cash'?'Наличный заказ':'Заправка')+' добавлен в демо');}
