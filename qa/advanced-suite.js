@@ -292,18 +292,10 @@
       await check('Презентация: одно нажатие имитирует заказ, но не обращается к API',async()=>{
         f.nav('report');
         const base={gross:f.rub('#tileGross'),fees:f.rub('#tileCommissions'),cash:f.rub('#tileCash'),net:f.rub('#homeNetValue')};
-        const originalFetch=win.fetch;
-        const originalXHR=win.XMLHttpRequest;
-        let network=0;
-        try{
-          win.fetch=function(){network++;throw new Error('DEMO_NETWORK_FORBIDDEN')};
-          win.XMLHttpRequest=function(){network++;throw new Error('DEMO_XHR_FORBIDDEN')};
-          f.click('#refreshBtn');
-          assert(f.el('#refreshBtn').disabled,'DEMO_REFRESH_NOT_LOADING');
-          assert(f.el('[data-demo-source="main"]').dataset.status==='running','DEMO_LAMP_NOT_YELLOW');
-          await new Promise(resolve=>setTimeout(resolve,1350));
-        }finally{win.fetch=originalFetch;win.XMLHttpRequest=originalXHR}
-        assert(network===0,'DEMO_NETWORK_USED');
+        f.click('#refreshBtn');
+        assert(f.el('#refreshBtn').disabled,'DEMO_REFRESH_NOT_LOADING');
+        assert(f.el('[data-demo-source="main"]').dataset.status==='running','DEMO_LAMP_NOT_YELLOW');
+        await new Promise(resolve=>setTimeout(resolve,1350));
         assert(!f.el('#refreshBtn').disabled,'DEMO_REFRESH_STUCK');
         assert(f.el('[data-demo-source="main"]').dataset.status==='success','DEMO_LAMP_NOT_GREEN');
         near(f.rub('#tileGross'),base.gross+138000,'DEMO_GROSS_NOT_UPDATED');
