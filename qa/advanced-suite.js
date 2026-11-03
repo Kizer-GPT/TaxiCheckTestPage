@@ -288,6 +288,36 @@
         near(f.rub('#homeNetValue'),old,'CANCEL_MUTATED_NET');
         assert(!doc.querySelector('#entryForm'),'CANCEL_DID_NOT_CLOSE');
       });
+
+      await check('Презентация: одно нажатие имитирует заказ, но не обращается к API',async()=>{
+        f.nav('report');
+        const base={gross:f.rub('#tileGross'),fees:f.rub('#tileCommissions'),cash:f.rub('#tileCash'),net:f.rub('#homeNetValue')};
+        const originalFetch=win.fetch;
+        const originalXHR=win.XMLHttpRequest;
+        let network=0;
+        try{
+          win.fetch=function(){network++;throw new Error('DEMO_NETWORK_FORBIDDEN')};
+          win.XMLHttpRequest=function(){network++;throw new Error('DEMO_XHR_FORBIDDEN')};
+          f.click('#refreshBtn');
+          assert(f.el('#refreshBtn').disabled,'DEMO_REFRESH_NOT_LOADING');
+          assert(f.el('[data-demo-source="main"]').dataset.status==='running','DEMO_LAMP_NOT_YELLOW');
+          await new Promise(resolve=>setTimeout(resolve,1350));
+        }finally{win.fetch=originalFetch;win.XMLHttpRequest=originalXHR}
+        assert(network===0,'DEMO_NETWORK_USED');
+        assert(!f.el('#refreshBtn').disabled,'DEMO_REFRESH_STUCK');
+        assert(f.el('[data-demo-source="main"]').dataset.status==='success','DEMO_LAMP_NOT_GREEN');
+        near(f.rub('#tileGross'),base.gross+138000,'DEMO_GROSS_NOT_UPDATED');
+        near(f.rub('#tileCommissions'),base.fees+35880,'DEMO_FEES_NOT_UPDATED');
+        near(f.rub('#tileCash'),base.cash+102120,'DEMO_AFTER_FEES_NOT_UPDATED');
+        near(f.rub('#homeNetValue'),base.net+102120,'DEMO_NET_NOT_UPDATED');
+        assert(/вымышлен|демо/i.test(f.el('#demoSyncNote').textContent),'DEMO_WARNING_MISSING');
+        f.detail('cash');f.record('TC-DEMO-101');
+        f.detail('commissions');f.record('TC-DEMO-101');
+        f.nav('settings');f.click('#resetDemo');
+        near(f.rub('#tileGross'),base.gross,'DEMO_RESET_GROSS');
+        near(f.rub('#homeNetValue'),base.net,'DEMO_RESET_NET');
+      });
+
       await check('Этап 3: JS-ошибок в пробных сценариях нет',()=>{
         assert(jsErrors===0,'QA_FIXTURE_JAVASCRIPT_ERROR');
       });
